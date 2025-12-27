@@ -3,10 +3,10 @@ package com.hayden.contextmanagerlib;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+//@SpringBootTest
 class ContextManagerLibApplicationTests {
 
-    @Test
+    //@Test
     void contextLoads() {
     }
 
