@@ -1,5 +1,6 @@
 package com.hayden.multiagentidelib.agent;
 
+import com.embabel.agent.api.common.SomeOf;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,137 @@ public interface AgentModels {
         STOP,
         BRANCH,
         PRUNE
+    }
+
+    interface InterruptDescriptor {
+        InterruptType type();
+        String reason();
+    }
+
+    record InterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record OrchestratorInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record OrchestratorCollectorInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record DiscoveryOrchestratorInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record DiscoveryAgentInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record DiscoveryCollectorInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record DiscoveryAgentDispatchInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record PlanningOrchestratorInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record PlanningAgentInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record PlanningCollectorInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record PlanningAgentDispatchInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record TicketOrchestratorInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record TicketAgentInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record TicketCollectorInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record TicketAgentDispatchInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record ReviewInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record MergerInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record ContextOrchestratorInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record ContextAgentInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record ContextCollectorInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
+    }
+
+    record ContextAgentDispatchInterruptRequest(
+            InterruptType type,
+            String reason
+    ) implements InterruptDescriptor {
     }
 
     enum CollectorDecisionType {
@@ -58,28 +190,24 @@ public interface AgentModels {
      */
     record OrchestratorAgentResult(
             DelegationPlan delegation,
-            List<InterruptType> interruptsRequested,
             String output
     ) {
     }
 
     record DiscoveryOrchestratorResult(
             DelegationPlan delegation,
-            List<InterruptType> interruptsRequested,
             String output
     ) {
     }
 
     record PlanningOrchestratorResult(
             DelegationPlan delegation,
-            List<InterruptType> interruptsRequested,
             String output
     ) {
     }
 
     record TicketOrchestratorResult(
             DelegationPlan delegation,
-            List<InterruptType> interruptsRequested,
             String output
     ) {
     }
@@ -88,53 +216,37 @@ public interface AgentModels {
      * Results for non-orchestrator agents.
      */
     record DiscoveryAgentResult(
-            String output,
-            List<InterruptType> interruptsRequested
+            String output
     ) {
     }
 
     record PlanningAgentResult(
-            String output,
-            List<InterruptType> interruptsRequested
+            String output
     ) {
     }
 
     record TicketAgentResult(
-            String output,
-            List<InterruptType> interruptsRequested
+            String output
     ) {
     }
 
     record ReviewAgentResult(
-            String output,
-            List<InterruptType> interruptsRequested
+            String output
     ) {
     }
 
     record MergerAgentResult(
-            String output,
-            List<InterruptType> interruptsRequested
+            String output
     ) {
-
-        public boolean isNeedingHumanReview() {
-            return interruptsRequested.contains(InterruptType.HUMAN_REVIEW);
-        }
-
-
-        public boolean isNeedingAgentReview() {
-            return interruptsRequested.contains(InterruptType.AGENT_REVIEW);
-        }
     }
 
     record SummaryAgentResult(
-            String output,
-            List<InterruptType> interruptsRequested
+            String output
     ) {
     }
 
     record ContextAgentResult(
-            String output,
-            List<InterruptType> interruptsRequested
+            String output
     ) {
     }
 
@@ -143,36 +255,271 @@ public interface AgentModels {
      */
     record DiscoveryCollectorResult(
             String consolidatedOutput,
-            List<InterruptType> interruptsRequested,
             CollectorDecision collectorDecision
     ) {
     }
 
     record PlanningCollectorResult(
             String consolidatedOutput,
-            List<InterruptType> interruptsRequested,
             CollectorDecision collectorDecision
     ) {
     }
 
     record ContextCollectorResult(
             String consolidatedOutput,
-            List<InterruptType> interruptsRequested,
             CollectorDecision collectorDecision
     ) {
     }
 
     record OrchestratorCollectorResult(
             String consolidatedOutput,
-            List<InterruptType> interruptsRequested,
             CollectorDecision collectorDecision
     ) {
     }
 
     record TicketCollectorResult(
             String consolidatedOutput,
-            List<InterruptType> interruptsRequested,
             CollectorDecision collectorDecision
     ) {
     }
+
+    record OrchestratorRequest(String goal, String phase) {
+    }
+
+    record OrchestratorCollectorRequest(String goal, String phase) {
+    }
+
+    record OrchestratorRouting(
+            OrchestratorInterruptRequest interruptRequest,
+            OrchestratorCollectorRequest collectorRequest
+    ) implements SomeOf {
+    }
+
+    record OrchestratorCollectorRouting(
+            OrchestratorCollectorInterruptRequest interruptRequest,
+            OrchestratorCollectorResult collectorResult,
+            DiscoveryOrchestratorRequest discoveryRequest,
+            PlanningOrchestratorRequest planningRequest,
+            TicketOrchestratorRequest ticketRequest,
+            ReviewRequest reviewRequest,
+            MergerRequest mergerRequest
+    ) implements SomeOf {
+    }
+
+    record DiscoveryOrchestratorRequest(String goal) {
+    }
+
+    record DiscoveryAgentRequest(String goal, String subdomainFocus) {
+    }
+
+    record DiscoveryAgentRequests(List<DiscoveryAgentRequest> requests) {
+    }
+
+    record DiscoveryCollectorRequest(String goal, String discoveryResults) {
+    }
+
+    record DiscoveryOrchestratorRouting(
+            DiscoveryOrchestratorInterruptRequest interruptRequest,
+            DiscoveryAgentRequests agentRequests,
+            DiscoveryCollectorRequest collectorRequest
+    ) implements SomeOf {
+    }
+
+    record DiscoveryAgentRouting(
+            DiscoveryAgentInterruptRequest interruptRequest,
+            DiscoveryAgentResult agentResult
+    ) implements SomeOf {
+    }
+
+    record DiscoveryCollectorRouting(
+            DiscoveryCollectorInterruptRequest interruptRequest,
+            DiscoveryCollectorResult collectorResult,
+            OrchestratorRequest orchestratorRequest,
+            DiscoveryOrchestratorRequest discoveryRequest,
+            PlanningOrchestratorRequest planningRequest,
+            TicketOrchestratorRequest ticketRequest,
+            ContextOrchestratorRequest contextRequest,
+            ReviewRequest reviewRequest,
+            MergerRequest mergerRequest
+    ) implements SomeOf {
+    }
+
+    record DiscoveryAgentDispatchRouting(DiscoveryAgentDispatchInterruptRequest interruptRequest,
+                                         DiscoveryCollectorRequest collectorRequest) implements SomeOf { }
+
+    record PlanningOrchestratorRequest(String goal) {
+    }
+
+    record PlanningAgentRequest(String goal) {
+    }
+
+    record PlanningAgentRequests(List<PlanningAgentRequest> requests) {
+    }
+
+    record PlanningCollectorRequest(String goal, String planningResults) {
+    }
+
+    record PlanningOrchestratorRouting(
+            PlanningOrchestratorInterruptRequest interruptRequest,
+            PlanningAgentRequests agentRequests,
+            PlanningCollectorRequest collectorRequest
+    ) implements SomeOf {
+    }
+
+    record PlanningAgentRouting(
+            PlanningAgentInterruptRequest interruptRequest,
+            PlanningAgentResult agentResult
+    ) implements SomeOf {
+    }
+
+    record PlanningCollectorRouting(
+            PlanningCollectorInterruptRequest interruptRequest,
+            PlanningCollectorResult collectorResult,
+            PlanningOrchestratorRequest planningRequest,
+            DiscoveryOrchestratorRequest discoveryOrchestratorRequest,
+            ReviewRequest reviewRequest,
+            MergerRequest mergerRequest
+    ) implements SomeOf {
+    }
+
+    record PlanningAgentDispatchRouting(
+            PlanningAgentDispatchInterruptRequest interruptRequest,
+            PlanningCollectorRequest planningCollectorRequest
+    ) implements SomeOf {
+    }
+
+    record TicketOrchestratorRequest(
+            String goal,
+            String tickets,
+            String discoveryContext,
+            String planningContext
+    ) {
+    }
+
+    record TicketAgentRequest(
+            String ticketDetails,
+            String ticketDetailsFilePath,
+            String discoveryContext,
+            String planningContext
+    ) {
+    }
+
+    record TicketAgentRequests(List<TicketAgentRequest> requests) {
+    }
+
+    record TicketCollectorRequest(String goal, String ticketResults) {
+    }
+
+    record TicketOrchestratorRouting(
+            TicketOrchestratorInterruptRequest interruptRequest,
+            TicketAgentRequests agentRequests,
+            TicketCollectorRequest collectorRequest
+    ) implements SomeOf {
+    }
+
+    record TicketAgentRouting(
+            TicketAgentInterruptRequest interruptRequest,
+            TicketAgentResult agentResult
+    ) implements SomeOf {
+    }
+
+    record TicketCollectorRouting(
+            TicketCollectorInterruptRequest interruptRequest,
+            TicketCollectorResult collectorResult,
+            TicketOrchestratorRequest ticketRequest,
+            ReviewRequest reviewRequest,
+            MergerRequest mergerRequest
+    ) implements SomeOf {
+    }
+
+    record TicketAgentDispatchRouting(
+            TicketAgentDispatchInterruptRequest interruptRequest,
+            TicketCollectorRequest ticketCollectorRequest
+    ) implements SomeOf {
+    }
+
+    record ReviewRequest(
+            String content,
+            String criteria,
+            OrchestratorCollectorRequest returnToOrchestratorCollector,
+            DiscoveryCollectorRequest returnToDiscoveryCollector,
+            PlanningCollectorRequest returnToPlanningCollector,
+            TicketCollectorRequest returnToTicketCollector
+    ) {
+    }
+
+    record ReviewRouting(
+            ReviewInterruptRequest interruptRequest,
+            ReviewAgentResult reviewResult,
+            OrchestratorCollectorRequest orchestratorCollectorRequest,
+            DiscoveryCollectorRequest discoveryCollectorRequest,
+            PlanningCollectorRequest planningCollectorRequest,
+            TicketCollectorRequest ticketCollectorRequest
+    ) implements SomeOf {
+    }
+
+    record MergerRequest(
+            String mergeContext,
+            String mergeSummary,
+            String conflictFiles,
+            OrchestratorCollectorRequest returnToOrchestratorCollector,
+            DiscoveryCollectorRequest returnToDiscoveryCollector,
+            PlanningCollectorRequest returnToPlanningCollector,
+            TicketCollectorRequest returnToTicketCollector
+    ) {
+    }
+
+    record MergerRouting(
+            MergerInterruptRequest interruptRequest,
+            MergerAgentResult mergerResult,
+            OrchestratorCollectorRequest orchestratorCollectorRequest,
+            DiscoveryCollectorRequest discoveryCollectorRequest,
+            PlanningCollectorRequest planningCollectorRequest,
+            TicketCollectorRequest ticketCollectorRequest
+    ) implements SomeOf {
+    }
+
+    record ContextOrchestratorRequest(String goal, String phase) {
+    }
+
+//    record ContextAgentRequest(String goal, String phase) {
+//    }
+
+//    record ContextAgentRequests(List<ContextAgentRequest> requests) {
+//    }
+
+//    record ContextCollectorRequest(String goal, String phase) {
+//    }
+
+//    record ContextOrchestratorRouting(
+//            ContextOrchestratorInterruptRequest interruptRequest,
+//            ContextAgentRequests agentRequests,
+//            ContextCollectorRequest collectorRequest
+//    ) implements SomeOf {
+//    }
+
+//    record ContextAgentRouting(
+//            ContextAgentInterruptRequest interruptRequest,
+//            ContextAgentResult agentResult
+//    ) implements SomeOf {
+//    }
+
+//    record ContextCollectorRouting(
+//            ContextCollectorInterruptRequest interruptRequest,
+//            ContextCollectorResult collectorResult,
+//            OrchestratorRequest orchestratorRequest,
+//            DiscoveryOrchestratorRequest discoveryRequest,
+//            PlanningOrchestratorRequest planningRequest,
+//            TicketOrchestratorRequest ticketRequest,
+//            ContextOrchestratorRequest contextRequest,
+//            ReviewRequest reviewRequest,
+//            MergerRequest mergerRequest
+//    ) implements SomeOf {
+//    }
+
+    //    TODO: Need to add all of the ...AgentDispatchResult, routing to their appropriate collectors
+//    record ContextAgentDispatchRouting(
+//            ContextAgentDispatchInterruptRequest interruptRequest,
+//    ) implements SomeOf {
+//    }
 }
