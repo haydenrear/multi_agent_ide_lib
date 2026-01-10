@@ -291,8 +291,12 @@ public interface AgentModels {
 
     record OrchestratorRouting(
             OrchestratorInterruptRequest interruptRequest,
-            OrchestratorCollectorRequest collectorRequest
+            OrchestratorCollectorRequest collectorRequest,
+            DiscoveryOrchestratorRequest orchestratorRequest
     ) implements SomeOf {
+        public OrchestratorRouting(OrchestratorInterruptRequest interruptRequest, OrchestratorCollectorRequest collectorRequest) {
+            this(interruptRequest, collectorRequest, null);
+        }
     }
 
     record OrchestratorCollectorRouting(
@@ -304,6 +308,9 @@ public interface AgentModels {
             ReviewRequest reviewRequest,
             MergerRequest mergerRequest
     ) implements SomeOf {
+        public OrchestratorCollectorRouting(OrchestratorCollectorResult collectorResult) {
+            this(null, collectorResult, null, null, null, null, null);
+        }
     }
 
     record DiscoveryOrchestratorRequest(String goal) {
@@ -327,8 +334,12 @@ public interface AgentModels {
 
     record DiscoveryAgentRouting(
             DiscoveryAgentInterruptRequest interruptRequest,
-            DiscoveryAgentResult agentResult
+            DiscoveryAgentResult agentResult,
+            AgentModels.PlanningOrchestratorRequest planningOrchestratorRequest
     ) implements SomeOf {
+        public DiscoveryAgentRouting(DiscoveryAgentInterruptRequest interruptRequest, DiscoveryAgentResult agentResult) {
+            this(interruptRequest, agentResult, null);
+        }
     }
 
     record DiscoveryCollectorRouting(
@@ -378,8 +389,12 @@ public interface AgentModels {
             PlanningOrchestratorRequest planningRequest,
             DiscoveryOrchestratorRequest discoveryOrchestratorRequest,
             ReviewRequest reviewRequest,
-            MergerRequest mergerRequest
+            MergerRequest mergerRequest,
+            TicketOrchestratorRequest ticketOrchestratorRequest
     ) implements SomeOf {
+        public PlanningCollectorRouting(PlanningCollectorInterruptRequest interruptRequest, PlanningCollectorResult collectorResult, PlanningOrchestratorRequest planningRequest, DiscoveryOrchestratorRequest discoveryOrchestratorRequest, ReviewRequest reviewRequest, MergerRequest mergerRequest) {
+            this(interruptRequest, collectorResult, planningRequest, discoveryOrchestratorRequest, reviewRequest, mergerRequest, null);
+        }
     }
 
     record PlanningAgentDispatchRouting(
@@ -427,6 +442,7 @@ public interface AgentModels {
             TicketCollectorInterruptRequest interruptRequest,
             TicketCollectorResult collectorResult,
             TicketOrchestratorRequest ticketRequest,
+            AgentModels.OrchestratorCollectorRequest orchestratorCollectorRequest,
             ReviewRequest reviewRequest,
             MergerRequest mergerRequest
     ) implements SomeOf {
