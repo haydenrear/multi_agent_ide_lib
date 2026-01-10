@@ -180,6 +180,20 @@ public interface Events {
         }
     }
 
+    record NodeErrorEvent(
+            String eventId,
+            Instant timestamp,
+            String nodeId,
+            String nodeTitle,
+            GraphNode.NodeType nodeType,
+            String message
+    ) implements GraphEvent {
+        @Override
+        public String eventType() {
+            return "NODE_ERROR";
+        }
+    }
+
     /**
      * Emitted when a node is branched with modified goal, or the same goal.
      *  Sometimes, we want to have another agent do the same thing, or do something
