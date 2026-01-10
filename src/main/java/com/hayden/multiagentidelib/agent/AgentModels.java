@@ -1,6 +1,8 @@
 package com.hayden.multiagentidelib.agent;
 
 import com.embabel.agent.api.common.SomeOf;
+import lombok.Builder;
+
 import java.util.List;
 import java.util.Map;
 
@@ -33,90 +35,105 @@ public interface AgentModels {
     ) implements InterruptDescriptor {
     }
 
+    @Builder
     record OrchestratorInterruptRequest(
             InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
+    @Builder
     record OrchestratorCollectorInterruptRequest(
             InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
+    @Builder
     record DiscoveryOrchestratorInterruptRequest(
             InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
+    @Builder
     record DiscoveryAgentInterruptRequest(
             InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
+    @Builder
     record DiscoveryCollectorInterruptRequest(
             InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
+    @Builder
     record DiscoveryAgentDispatchInterruptRequest(
             InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
+    @Builder
     record PlanningOrchestratorInterruptRequest(
             InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
+    @Builder
     record PlanningAgentInterruptRequest(
             InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
+    @Builder
     record PlanningCollectorInterruptRequest(
             InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
+    @Builder
     record PlanningAgentDispatchInterruptRequest(
             InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
+    @Builder
     record TicketOrchestratorInterruptRequest(
             InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
+    @Builder
     record TicketAgentInterruptRequest(
             InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
+    @Builder
     record TicketCollectorInterruptRequest(
             InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
+    @Builder
     record TicketAgentDispatchInterruptRequest(
             InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
+    @Builder
     record ReviewInterruptRequest(
             InterruptType type,
             String reason
@@ -159,6 +176,7 @@ public interface AgentModels {
         STOP
     }
 
+    @Builder
     record CollectorDecision(
             CollectorDecisionType decisionType,
             String rationale,
@@ -170,6 +188,7 @@ public interface AgentModels {
      * Shared data models describing agent interactions, results, and interrupts.
      * These are intentionally transport-agnostic and can be serialized as needed.
      */
+    @Builder
     record AgentInteraction(
             InteractionType interactionType,
             String message
@@ -179,6 +198,7 @@ public interface AgentModels {
     /**
      * Defines how to kick off sub-agents for orchestrated work.
      */
+    @Builder
     record DelegationPlan(
             String summary,
             Map<String, String> subAgentGoals
@@ -188,24 +208,28 @@ public interface AgentModels {
     /**
      * Orchestrator-specific results.
      */
+    @Builder
     record OrchestratorAgentResult(
             DelegationPlan delegation,
             String output
     ) {
     }
 
+    @Builder
     record DiscoveryOrchestratorResult(
             DelegationPlan delegation,
             String output
     ) {
     }
 
+    @Builder
     record PlanningOrchestratorResult(
             DelegationPlan delegation,
             String output
     ) {
     }
 
+    @Builder
     record TicketOrchestratorResult(
             DelegationPlan delegation,
             String output
@@ -215,36 +239,43 @@ public interface AgentModels {
     /**
      * Results for non-orchestrator agents.
      */
+    @Builder
     record DiscoveryAgentResult(
             String output
     ) {
     }
 
+    @Builder
     record PlanningAgentResult(
             String output
     ) {
     }
 
+    @Builder
     record TicketAgentResult(
             String output
     ) {
     }
 
+    @Builder
     record ReviewAgentResult(
             String output
     ) {
     }
 
+    @Builder
     record MergerAgentResult(
             String output
     ) {
     }
 
+    @Builder
     record SummaryAgentResult(
             String output
     ) {
     }
 
+    @Builder
     record ContextAgentResult(
             String output
     ) {
@@ -253,42 +284,50 @@ public interface AgentModels {
     /**
      * Results for collector agents.
      */
+    @Builder
     record DiscoveryCollectorResult(
             String consolidatedOutput,
             CollectorDecision collectorDecision
     ) {
     }
 
+    @Builder
     record PlanningCollectorResult(
             String consolidatedOutput,
             CollectorDecision collectorDecision
     ) {
     }
 
+    @Builder
     record ContextCollectorResult(
             String consolidatedOutput,
             CollectorDecision collectorDecision
     ) {
     }
 
+    @Builder
     record OrchestratorCollectorResult(
             String consolidatedOutput,
             CollectorDecision collectorDecision
     ) {
     }
 
+    @Builder
     record TicketCollectorResult(
             String consolidatedOutput,
             CollectorDecision collectorDecision
     ) {
     }
 
+    @Builder
     record OrchestratorRequest(String goal, String phase) {
     }
 
+    @Builder
     record OrchestratorCollectorRequest(String goal, String phase) {
     }
 
+    @Builder
     record OrchestratorRouting(
             OrchestratorInterruptRequest interruptRequest,
             OrchestratorCollectorRequest collectorRequest,
@@ -299,9 +338,11 @@ public interface AgentModels {
         }
     }
 
+    @Builder
     record OrchestratorCollectorRouting(
             OrchestratorCollectorInterruptRequest interruptRequest,
             OrchestratorCollectorResult collectorResult,
+            OrchestratorRequest orchestratorRequest,
             DiscoveryOrchestratorRequest discoveryRequest,
             PlanningOrchestratorRequest planningRequest,
             TicketOrchestratorRequest ticketRequest,
@@ -309,22 +350,37 @@ public interface AgentModels {
             MergerRequest mergerRequest
     ) implements SomeOf {
         public OrchestratorCollectorRouting(OrchestratorCollectorResult collectorResult) {
-            this(null, collectorResult, null, null, null, null, null);
+            this(null, collectorResult, null, null, null, null, null, null);
         }
     }
 
-    record DiscoveryOrchestratorRequest(String goal) {
+    @Builder
+    record DiscoveryOrchestratorRequested(DiscoveryOrchestratorRequest request) {
+
     }
 
+    @Builder
+    record DiscoveryOrchestratorRequest(String goal) {
+
+        public DiscoveryOrchestratorRequested to() {
+            return new DiscoveryOrchestratorRequested(this);
+        }
+
+    }
+
+    @Builder
     record DiscoveryAgentRequest(String goal, String subdomainFocus) {
     }
 
+    @Builder
     record DiscoveryAgentRequests(List<DiscoveryAgentRequest> requests) {
     }
 
+    @Builder
     record DiscoveryCollectorRequest(String goal, String discoveryResults) {
     }
 
+    @Builder
     record DiscoveryOrchestratorRouting(
             DiscoveryOrchestratorInterruptRequest interruptRequest,
             DiscoveryAgentRequests agentRequests,
@@ -332,6 +388,7 @@ public interface AgentModels {
     ) implements SomeOf {
     }
 
+    @Builder
     record DiscoveryAgentRouting(
             DiscoveryAgentInterruptRequest interruptRequest,
             DiscoveryAgentResult agentResult,
@@ -342,6 +399,7 @@ public interface AgentModels {
         }
     }
 
+    @Builder
     record DiscoveryCollectorRouting(
             DiscoveryCollectorInterruptRequest interruptRequest,
             DiscoveryCollectorResult collectorResult,
@@ -355,21 +413,27 @@ public interface AgentModels {
     ) implements SomeOf {
     }
 
+    @Builder
     record DiscoveryAgentDispatchRouting(DiscoveryAgentDispatchInterruptRequest interruptRequest,
                                          DiscoveryCollectorRequest collectorRequest) implements SomeOf { }
 
+    @Builder
     record PlanningOrchestratorRequest(String goal) {
     }
 
+    @Builder
     record PlanningAgentRequest(String goal) {
     }
 
+    @Builder
     record PlanningAgentRequests(List<PlanningAgentRequest> requests) {
     }
 
+    @Builder
     record PlanningCollectorRequest(String goal, String planningResults) {
     }
 
+    @Builder
     record PlanningOrchestratorRouting(
             PlanningOrchestratorInterruptRequest interruptRequest,
             PlanningAgentRequests agentRequests,
@@ -377,12 +441,14 @@ public interface AgentModels {
     ) implements SomeOf {
     }
 
+    @Builder
     record PlanningAgentRouting(
             PlanningAgentInterruptRequest interruptRequest,
             PlanningAgentResult agentResult
     ) implements SomeOf {
     }
 
+    @Builder
     record PlanningCollectorRouting(
             PlanningCollectorInterruptRequest interruptRequest,
             PlanningCollectorResult collectorResult,
@@ -397,12 +463,14 @@ public interface AgentModels {
         }
     }
 
+    @Builder
     record PlanningAgentDispatchRouting(
             PlanningAgentDispatchInterruptRequest interruptRequest,
             PlanningCollectorRequest planningCollectorRequest
     ) implements SomeOf {
     }
 
+    @Builder
     record TicketOrchestratorRequest(
             String goal,
             String tickets,
@@ -411,6 +479,7 @@ public interface AgentModels {
     ) {
     }
 
+    @Builder
     record TicketAgentRequest(
             String ticketDetails,
             String ticketDetailsFilePath,
@@ -419,12 +488,15 @@ public interface AgentModels {
     ) {
     }
 
+    @Builder
     record TicketAgentRequests(List<TicketAgentRequest> requests) {
     }
 
+    @Builder
     record TicketCollectorRequest(String goal, String ticketResults) {
     }
 
+    @Builder
     record TicketOrchestratorRouting(
             TicketOrchestratorInterruptRequest interruptRequest,
             TicketAgentRequests agentRequests,
@@ -432,12 +504,14 @@ public interface AgentModels {
     ) implements SomeOf {
     }
 
+    @Builder
     record TicketAgentRouting(
             TicketAgentInterruptRequest interruptRequest,
             TicketAgentResult agentResult
     ) implements SomeOf {
     }
 
+    @Builder
     record TicketCollectorRouting(
             TicketCollectorInterruptRequest interruptRequest,
             TicketCollectorResult collectorResult,
@@ -448,12 +522,14 @@ public interface AgentModels {
     ) implements SomeOf {
     }
 
+    @Builder
     record TicketAgentDispatchRouting(
             TicketAgentDispatchInterruptRequest interruptRequest,
             TicketCollectorRequest ticketCollectorRequest
     ) implements SomeOf {
     }
 
+    @Builder
     record ReviewRequest(
             String content,
             String criteria,
@@ -464,6 +540,7 @@ public interface AgentModels {
     ) {
     }
 
+    @Builder
     record ReviewRouting(
             ReviewInterruptRequest interruptRequest,
             ReviewAgentResult reviewResult,
@@ -474,6 +551,7 @@ public interface AgentModels {
     ) implements SomeOf {
     }
 
+    @Builder
     record MergerRequest(
             String mergeContext,
             String mergeSummary,
@@ -485,6 +563,7 @@ public interface AgentModels {
     ) {
     }
 
+    @Builder
     record MergerRouting(
             MergerInterruptRequest interruptRequest,
             MergerAgentResult mergerResult,
@@ -495,6 +574,7 @@ public interface AgentModels {
     ) implements SomeOf {
     }
 
+    @Builder
     record ContextOrchestratorRequest(String goal, String phase) {
     }
 
