@@ -70,6 +70,33 @@ public interface Events {
         }
     }
 
+    record ActionStartedEvent(
+            String eventId,
+            Instant timestamp,
+            String nodeId,
+            String agentName,
+            String actionName
+    ) implements AgentEvent {
+        @Override
+        public String eventType() {
+            return "ACTION_STARTED";
+        }
+    }
+
+    record ActionCompletedEvent(
+            String eventId,
+            Instant timestamp,
+            String nodeId,
+            String agentName,
+            String actionName,
+            String outcomeType
+    ) implements AgentEvent {
+        @Override
+        public String eventType() {
+            return "ACTION_COMPLETED";
+        }
+    }
+
     record StopAgentEvent(
             String eventId,
             Instant timestamp,
