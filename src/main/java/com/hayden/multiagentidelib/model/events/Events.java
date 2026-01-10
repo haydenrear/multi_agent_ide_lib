@@ -112,6 +112,18 @@ public interface Events {
         }
     }
 
+    record ResolveInterruptEvent(
+            String eventId,
+            Instant timestamp,
+            String nodeId,
+            String toAddMessage
+    ) implements AgentEvent {
+        @Override
+        public String eventType() {
+            return "RESOLVE_INTERRUPT";
+        }
+    }
+
     record AddMessageEvent(
             String eventId,
             Instant timestamp,
