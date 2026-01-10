@@ -4,6 +4,7 @@ plugins {
     id("com.github.node-gradle.node")
     id("com.hayden.mcp")
     id("com.hayden.paths")
+    id("com.hayden.no-main-class")
 }
 
 group = "com.hayden"
