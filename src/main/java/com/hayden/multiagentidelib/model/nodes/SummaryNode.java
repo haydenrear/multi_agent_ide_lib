@@ -1,6 +1,7 @@
 package com.hayden.multiagentidelib.model.nodes;
 
 import com.hayden.multiagentidelib.agent.AgentModels;
+import com.hayden.utilitymodule.acp.events.Events;
 import lombok.Builder;
 
 import java.time.Instant;
@@ -18,7 +19,7 @@ public record SummaryNode(
         String nodeId,
         String title,
         String goal,
-        GraphNode.NodeStatus status,
+        Events.NodeStatus status,
         String parentNodeId,
         List<String> childNodeIds,
         Map<String, String> metadata,
@@ -34,7 +35,7 @@ public record SummaryNode(
         InterruptContext interruptibleContext
 ) implements GraphNode, Viewable<String>, Interruptible {
 
-    public SummaryNode(String nodeId, String title, String goal, GraphNode.NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata, Instant createdAt, Instant lastUpdatedAt, List<String> summarizedNodeIds, String summaryContent, int totalTasksCompleted, int totalTasksFailed) {
+    public SummaryNode(String nodeId, String title, String goal, Events.NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata, Instant createdAt, Instant lastUpdatedAt, List<String> summarizedNodeIds, String summaryContent, int totalTasksCompleted, int totalTasksFailed) {
         this(nodeId, title, goal, status, parentNodeId, childNodeIds, metadata, createdAt, lastUpdatedAt,
                 summarizedNodeIds, summaryContent, totalTasksCompleted, totalTasksFailed, null, null);
     }
@@ -47,8 +48,8 @@ public record SummaryNode(
     }
 
     @Override
-    public NodeType nodeType() {
-        return NodeType.SUMMARY;
+    public Events.NodeType nodeType() {
+        return Events.NodeType.SUMMARY;
     }
 
     @Override
@@ -59,7 +60,7 @@ public record SummaryNode(
     /**
      * Create an updated version with new status.
      */
-    public SummaryNode withStatus(GraphNode.NodeStatus newStatus) {
+    public SummaryNode withStatus(Events.NodeStatus newStatus) {
         return toBuilder()
                 .status(newStatus)
                 .lastUpdatedAt(Instant.now())

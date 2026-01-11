@@ -1,6 +1,6 @@
 package com.hayden.multiagentidelib.model.nodes;
 
-import com.hayden.multiagentidelib.agent.AgentModels;
+import com.hayden.utilitymodule.acp.events.Events;
 
 /**
  * Marker mixin for nodes that represent an interrupt.
@@ -9,7 +9,7 @@ public interface Interrupt {
 
     InterruptContext interruptContext();
 
-    default AgentModels.InterruptType interruptType() {
+    default Events.InterruptType interruptType() {
         InterruptContext context = interruptContext();
         return context != null ? context.type() : null;
     }

@@ -1,6 +1,7 @@
 package com.hayden.multiagentidelib.model.nodes;
 
 import com.hayden.multiagentidelib.agent.AgentModels;
+import com.hayden.utilitymodule.acp.events.Events;
 import lombok.Builder;
 
 import java.time.Instant;
@@ -15,7 +16,7 @@ public record PlanningOrchestratorNode(
         String nodeId,
         String title,
         String goal,
-        NodeStatus status,
+        Events.NodeStatus status,
         String parentNodeId,
         List<String> childNodeIds,
         Map<String, String> metadata,
@@ -31,7 +32,7 @@ public record PlanningOrchestratorNode(
         InterruptContext interruptibleContext
 ) implements GraphNode, Viewable<String>, Orchestrator, Interruptible {
 
-    public PlanningOrchestratorNode(String nodeId, String title, String goal, NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata, Instant createdAt, Instant lastUpdatedAt, List<String> generatedTicketIds, String planContent, int estimatedSubtasks, int completedSubtasks) {
+    public PlanningOrchestratorNode(String nodeId, String title, String goal, Events.NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata, Instant createdAt, Instant lastUpdatedAt, List<String> generatedTicketIds, String planContent, int estimatedSubtasks, int completedSubtasks) {
         this(nodeId, title, goal, status, parentNodeId, childNodeIds, metadata, createdAt, lastUpdatedAt,
                 generatedTicketIds, planContent, estimatedSubtasks, completedSubtasks, null, null);
     }
@@ -45,8 +46,8 @@ public record PlanningOrchestratorNode(
     }
 
     @Override
-    public NodeType nodeType() {
-        return NodeType.PLANNING;
+    public Events.NodeType nodeType() {
+        return Events.NodeType.PLANNING;
     }
 
     @Override
@@ -57,7 +58,7 @@ public record PlanningOrchestratorNode(
     /**
      * Create an updated version with new status.
      */
-    public PlanningOrchestratorNode withStatus(NodeStatus newStatus) {
+    public PlanningOrchestratorNode withStatus(Events.NodeStatus newStatus) {
         return toBuilder()
                 .status(newStatus)
                 .lastUpdatedAt(Instant.now())

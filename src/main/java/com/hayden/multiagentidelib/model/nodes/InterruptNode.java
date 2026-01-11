@@ -1,5 +1,6 @@
 package com.hayden.multiagentidelib.model.nodes;
 
+import com.hayden.utilitymodule.acp.events.Events;
 import lombok.Builder;
 
 import java.time.Instant;
@@ -16,7 +17,7 @@ public record InterruptNode(
         String nodeId,
         String title,
         String goal,
-        GraphNode.NodeStatus status,
+        Events.NodeStatus status,
         String parentNodeId,
         List<String> childNodeIds,
         Map<String, String> metadata,
@@ -33,8 +34,8 @@ public record InterruptNode(
     }
 
     @Override
-    public NodeType nodeType() {
-        return NodeType.INTERRUPT;
+    public Events.NodeType nodeType() {
+        return Events.NodeType.INTERRUPT;
     }
 
     @Override
@@ -42,7 +43,7 @@ public record InterruptNode(
         return interruptContext.reason();
     }
 
-    public InterruptNode withStatus(GraphNode.NodeStatus newStatus) {
+    public InterruptNode withStatus(Events.NodeStatus newStatus) {
         return toBuilder()
                 .status(newStatus)
                 .lastUpdatedAt(Instant.now())

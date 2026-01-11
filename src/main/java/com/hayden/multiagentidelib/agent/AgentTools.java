@@ -1,15 +1,15 @@
 package com.hayden.multiagentidelib.agent;
 
 import com.hayden.commitdiffcontext.mcp.ToolCarrier;
-import com.hayden.multiagentidelib.infrastructure.EventBus;
-import com.hayden.multiagentidelib.infrastructure.McpRequestContext;
-import com.hayden.multiagentidelib.model.events.Events;
+import com.hayden.utilitymodule.acp.AcpChatModel;
+import com.hayden.utilitymodule.acp.events.EventBus;
+import com.hayden.utilitymodule.acp.events.McpRequestContext;
+import com.hayden.utilitymodule.acp.events.Events;
 import com.hayden.multiagentidelib.model.ui.GuiEmissionResult;
 import com.hayden.multiagentidelib.model.ui.GuiEventPayload;
 import com.hayden.multiagentidelib.model.ui.UiDiffRequest;
 import com.hayden.multiagentidelib.model.ui.UiDiffResult;
 import com.hayden.multiagentidelib.model.ui.UiEventFeedback;
-import com.hayden.multiagentidelib.model.ui.UiStateSnapshot;
 import com.hayden.multiagentidelib.service.UiStateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -28,7 +28,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AgentTools implements ToolCarrier {
 
-    public static final String UI_SESSION_HEADER = "X-AG-UI-SESSION";
 
     private final EventBus eventBus;
     private final UiStateService uiStateService;
@@ -50,7 +49,7 @@ public class AgentTools implements ToolCarrier {
         if (renderTree == null) {
             return new GuiEmissionResult("rejected", "missing_render_tree", "Render tree or a2uiMessages required.", true);
         }
-        UiStateSnapshot snapshot = uiStateService.captureSnapshot(sessionId, renderTree);
+        Events.UiStateSnapshot snapshot = uiStateService.captureSnapshot(sessionId, renderTree);
 
         Map<String, Object> payloadMap = new LinkedHashMap<>();
         payloadMap.put("sessionId", sessionId);
@@ -76,14 +75,14 @@ public class AgentTools implements ToolCarrier {
     }
 
     @org.springframework.ai.tool.annotation.Tool(description = "Retrieve the current GUI snapshot for a session")
-    public UiStateSnapshot retrieveGui(String sessionId) {
+    public Events.UiStateSnapshot retrieveGui(String sessionId) {
         String resolvedSessionId = resolveSessionId(sessionId);
         String safeSessionId = StringUtils.hasText(resolvedSessionId) ? resolvedSessionId : "unknown";
-        UiStateSnapshot snapshot = uiStateService.getSnapshot(safeSessionId);
+        Events.UiStateSnapshot snapshot = uiStateService.getSnapshot(safeSessionId);
         if (snapshot != null) {
             return snapshot;
         }
-        return new UiStateSnapshot(safeSessionId, null, Instant.now(), Map.of());
+        return new Events.UiStateSnapshot(safeSessionId, null, Instant.now(), Map.of());
     }
 
     @org.springframework.ai.tool.annotation.Tool(description = "Submit feedback for a UI event")
@@ -102,7 +101,7 @@ public class AgentTools implements ToolCarrier {
             return new GuiEmissionResult("rejected", "missing_message", "Feedback message is required.", true);
         }
 
-        UiStateSnapshot snapshot = feedback.snapshot() != null
+        Events.UiStateSnapshot snapshot = feedback.snapshot() != null
                 ? feedback.snapshot()
                 : uiStateService.getSnapshot(sessionId);
 
@@ -135,7 +134,7 @@ public class AgentTools implements ToolCarrier {
                 request.summary()
         );
         UiDiffResult result = uiStateService.applyDiff(resolved);
-        UiStateSnapshot snapshot = uiStateService.getSnapshot(sessionId);
+        Events.UiStateSnapshot snapshot = uiStateService.getSnapshot(sessionId);
 
         if ("applied".equalsIgnoreCase(result.status()) && snapshot != null) {
             eventBus.publish(new Events.UiDiffAppliedEvent(
@@ -164,7 +163,7 @@ public class AgentTools implements ToolCarrier {
         if (StringUtils.hasText(sessionId)) {
             return sessionId;
         }
-        return McpRequestContext.getHeader(UI_SESSION_HEADER);
+        return McpRequestContext.getHeader(AcpChatModel.AcpChatModel.UI_SESSION_HEADER());
     }
 
 }

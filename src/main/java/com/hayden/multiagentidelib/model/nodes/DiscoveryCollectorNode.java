@@ -1,6 +1,7 @@
 package com.hayden.multiagentidelib.model.nodes;
 
 import com.hayden.multiagentidelib.agent.AgentModels;
+import com.hayden.utilitymodule.acp.events.Events;
 import lombok.Builder;
 
 import java.time.Instant;
@@ -15,7 +16,7 @@ public record DiscoveryCollectorNode(
         String nodeId,
         String title,
         String goal,
-        NodeStatus status,
+        Events.NodeStatus status,
         String parentNodeId,
         List<String> childNodeIds,
         Map<String, String> metadata,
@@ -30,7 +31,7 @@ public record DiscoveryCollectorNode(
         InterruptContext interruptibleContext
 ) implements GraphNode, Viewable<String>, Collector, Interruptible {
 
-    public DiscoveryCollectorNode(String nodeId, String title, String goal, NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata, Instant createdAt, Instant lastUpdatedAt, String summaryContent, int totalTasksCompleted, int totalTasksFailed) {
+    public DiscoveryCollectorNode(String nodeId, String title, String goal, Events.NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata, Instant createdAt, Instant lastUpdatedAt, String summaryContent, int totalTasksCompleted, int totalTasksFailed) {
         this(nodeId, title, goal, status, parentNodeId, childNodeIds, metadata, createdAt, lastUpdatedAt,
                 summaryContent, totalTasksCompleted, totalTasksFailed, new ArrayList<>(), null, null, null);
     }
@@ -43,8 +44,8 @@ public record DiscoveryCollectorNode(
     }
 
     @Override
-    public NodeType nodeType() {
-        return NodeType.SUMMARY;
+    public Events.NodeType nodeType() {
+        return Events.NodeType.SUMMARY;
     }
 
     @Override
@@ -55,7 +56,7 @@ public record DiscoveryCollectorNode(
     /**
      * Create an updated version with new status.
      */
-    public DiscoveryCollectorNode withStatus(NodeStatus newStatus) {
+    public DiscoveryCollectorNode withStatus(Events.NodeStatus newStatus) {
         return toBuilder()
                 .status(newStatus)
                 .lastUpdatedAt(Instant.now())

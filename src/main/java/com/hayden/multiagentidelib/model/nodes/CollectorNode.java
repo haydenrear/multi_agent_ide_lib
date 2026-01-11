@@ -1,6 +1,7 @@
 package com.hayden.multiagentidelib.model.nodes;
 
 import com.hayden.multiagentidelib.agent.AgentModels;
+import com.hayden.utilitymodule.acp.events.Events;
 import lombok.Builder;
 
 import java.time.Instant;
@@ -15,7 +16,7 @@ public record CollectorNode(
         String nodeId,
         String title,
         String goal,
-        NodeStatus status,
+        Events.NodeStatus status,
         String parentNodeId,
         List<String> childNodeIds,
         Map<String, String> metadata,
@@ -35,13 +36,13 @@ public record CollectorNode(
         InterruptContext interruptibleContext
 ) implements GraphNode, Viewable<String>, Collector, Interruptible {
 
-    public CollectorNode(String nodeId, String title, String goal, NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata, Instant createdAt, Instant lastUpdatedAt, String repositoryUrl, String baseBranch, boolean hasSubmodules, List<String> submoduleNames, String mainWorktreeId, List<String> submoduleWorktreeIds, String orchestratorOutput) {
+    public CollectorNode(String nodeId, String title, String goal, Events.NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata, Instant createdAt, Instant lastUpdatedAt, String repositoryUrl, String baseBranch, boolean hasSubmodules, List<String> submoduleNames, String mainWorktreeId, List<String> submoduleWorktreeIds, String orchestratorOutput) {
         this(nodeId, title, goal, status, parentNodeId, childNodeIds, metadata, createdAt, lastUpdatedAt,
                 repositoryUrl, baseBranch, hasSubmodules, submoduleNames, mainWorktreeId, submoduleWorktreeIds, orchestratorOutput,
                 new ArrayList<>(), new ArrayList<>(), null, null, null);
     }
 
-    public CollectorNode(String nodeId, String title, String goal, NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata, Instant createdAt, Instant lastUpdatedAt, String repositoryUrl, String baseBranch, boolean hasSubmodules, List<String> submoduleNames, String mainWorktreeId, List<String> submoduleWorktreeIds, String orchestratorOutput, List<SubmoduleNode> submodules) {
+    public CollectorNode(String nodeId, String title, String goal, Events.NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata, Instant createdAt, Instant lastUpdatedAt, String repositoryUrl, String baseBranch, boolean hasSubmodules, List<String> submoduleNames, String mainWorktreeId, List<String> submoduleWorktreeIds, String orchestratorOutput, List<SubmoduleNode> submodules) {
         this(nodeId, title, goal, status, parentNodeId, childNodeIds, metadata, createdAt, lastUpdatedAt,
                 repositoryUrl, baseBranch, hasSubmodules, submoduleNames, mainWorktreeId, submoduleWorktreeIds, orchestratorOutput,
                 submodules, new ArrayList<>(), null, null, null);
@@ -58,8 +59,8 @@ public record CollectorNode(
     }
 
     @Override
-    public NodeType nodeType() {
-        return NodeType.ORCHESTRATOR;
+    public Events.NodeType nodeType() {
+        return Events.NodeType.ORCHESTRATOR;
     }
 
     @Override
@@ -70,7 +71,7 @@ public record CollectorNode(
     /**
      * Create an updated version with new status.
      */
-    public CollectorNode withStatus(NodeStatus newStatus) {
+    public CollectorNode withStatus(Events.NodeStatus newStatus) {
         return toBuilder()
                 .status(newStatus)
                 .lastUpdatedAt(Instant.now())

@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-public class DefaultChatMemoryContext implements ChatMemoryContext {
+public class DefaultChatMemoryContext implements com.hayden.utilitymodule.acp.ChatMemoryContext {
 
     private final Map<Object, List<Message>> messageStore = new ConcurrentHashMap<>();
 

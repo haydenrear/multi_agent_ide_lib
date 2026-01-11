@@ -1,6 +1,6 @@
 package com.hayden.multiagentidelib.model.nodes;
 
-import com.hayden.multiagentidelib.agent.AgentModels;
+import com.hayden.utilitymodule.acp.events.Events;
 
 /**
  * Capability mixin for nodes that can be interrupted.
@@ -14,7 +14,7 @@ public interface Interruptible {
         return context != null && context.status() != InterruptContext.InterruptStatus.RESOLVED;
     }
 
-    default AgentModels.InterruptType interruptType() {
+    default Events.InterruptType interruptType() {
         InterruptContext context = interruptibleContext();
         return context != null ? context.type() : null;
     }

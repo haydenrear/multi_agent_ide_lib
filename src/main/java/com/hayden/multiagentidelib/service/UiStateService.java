@@ -1,8 +1,8 @@
 package com.hayden.multiagentidelib.service;
 
+import com.hayden.utilitymodule.acp.events.Events;
 import com.hayden.multiagentidelib.model.ui.UiDiffRequest;
 import com.hayden.multiagentidelib.model.ui.UiDiffResult;
-import com.hayden.multiagentidelib.model.ui.UiStateSnapshot;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -18,16 +18,16 @@ public class UiStateService {
 
     private static final int MAX_HISTORY = 20;
 
-    private final Map<String, Deque<UiStateSnapshot>> snapshots = new ConcurrentHashMap<>();
+    private final Map<String, Deque<Events.UiStateSnapshot>> snapshots = new ConcurrentHashMap<>();
     private final AtomicLong revisionCounter = new AtomicLong();
 
-    public UiStateSnapshot captureSnapshot(String sessionId, Object renderTree) {
+    public Events.UiStateSnapshot captureSnapshot(String sessionId, Object renderTree) {
         if (sessionId == null || sessionId.isBlank() || renderTree == null) {
             return null;
         }
         String revision = nextRevision();
-        UiStateSnapshot snapshot = new UiStateSnapshot(sessionId, revision, Instant.now(), renderTree);
-        Deque<UiStateSnapshot> history = snapshots.computeIfAbsent(sessionId, ignored -> new ArrayDeque<>());
+        Events.UiStateSnapshot snapshot = new Events.UiStateSnapshot(sessionId, revision, Instant.now(), renderTree);
+        Deque<Events.UiStateSnapshot> history = snapshots.computeIfAbsent(sessionId, ignored -> new ArrayDeque<>());
         synchronized (history) {
             history.addFirst(snapshot);
             while (history.size() > MAX_HISTORY) {
@@ -37,11 +37,11 @@ public class UiStateService {
         return snapshot;
     }
 
-    public UiStateSnapshot getSnapshot(String sessionId) {
+    public Events.UiStateSnapshot getSnapshot(String sessionId) {
         if (sessionId == null || sessionId.isBlank()) {
             return null;
         }
-        Deque<UiStateSnapshot> history = snapshots.get(sessionId);
+        Deque<Events.UiStateSnapshot> history = snapshots.get(sessionId);
         if (history == null) {
             return null;
         }
@@ -54,7 +54,7 @@ public class UiStateService {
         if (request == null || request.sessionId() == null || request.sessionId().isBlank()) {
             return new UiDiffResult("rejected", null, "missing_session", "Session id is required.");
         }
-        UiStateSnapshot current = getSnapshot(request.sessionId());
+        Events.UiStateSnapshot current = getSnapshot(request.sessionId());
         if (current == null) {
             return new UiDiffResult("rejected", null, "missing_snapshot", "No UI snapshot available.");
         }
@@ -65,7 +65,7 @@ public class UiStateService {
                     "Base revision does not match current snapshot.");
         }
         Object nextRenderTree = mergeRenderTree(current.renderTree(), request.diff());
-        UiStateSnapshot updated = captureSnapshot(request.sessionId(), nextRenderTree);
+        Events.UiStateSnapshot updated = captureSnapshot(request.sessionId(), nextRenderTree);
         return new UiDiffResult("applied", updated != null ? updated.revision() : null, null, "Diff applied.");
     }
 
@@ -73,11 +73,11 @@ public class UiStateService {
         if (sessionId == null || sessionId.isBlank()) {
             return new UiDiffResult("rejected", null, "missing_session", "Session id is required.");
         }
-        Deque<UiStateSnapshot> history = snapshots.get(sessionId);
+        Deque<Events.UiStateSnapshot> history = snapshots.get(sessionId);
         if (history == null) {
             return new UiDiffResult("rejected", null, "missing_snapshot", "No UI snapshot available.");
         }
-        UiStateSnapshot snapshot;
+        Events.UiStateSnapshot snapshot;
         synchronized (history) {
             if (history.size() < 2) {
                 return new UiDiffResult("rejected", history.peekFirst() != null ? history.peekFirst().revision() : null,
