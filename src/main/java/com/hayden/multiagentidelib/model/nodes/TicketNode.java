@@ -1,6 +1,7 @@
 package com.hayden.multiagentidelib.model.nodes;
 
 import com.hayden.multiagentidelib.agent.AgentModels;
+import com.hayden.utilitymodule.acp.events.Events;
 import lombok.Builder;
 import java.time.Instant;
 import java.util.*;
@@ -14,7 +15,7 @@ public record TicketNode(
         String nodeId,
         String title,
         String goal,
-        GraphNode.NodeStatus status,
+        Events.NodeStatus status,
         String parentNodeId,
         List<String> childNodeIds,
         Map<String, String> metadata,
@@ -33,7 +34,7 @@ public record TicketNode(
         InterruptContext interruptibleContext
 ) implements GraphNode, Viewable<String>, HasWorktree, Interruptible {
 
-    public TicketNode(String nodeId, String title, String goal, GraphNode.NodeStatus status, String parentNodeId, List<String> childNodeIds,
+    public TicketNode(String nodeId, String title, String goal, Events.NodeStatus status, String parentNodeId, List<String> childNodeIds,
                       Map<String, String> metadata, Instant createdAt, Instant lastUpdatedAt, WorkTree worktree, int completedSubtasks, int totalSubtasks, String agentType, String workOutput, boolean mergeRequired, int streamingTokenCount) {
         this(nodeId, title, goal, status, parentNodeId, childNodeIds, metadata, createdAt, lastUpdatedAt,
                 worktree, completedSubtasks, totalSubtasks, agentType,
@@ -49,8 +50,8 @@ public record TicketNode(
     }
 
     @Override
-    public NodeType nodeType() {
-        return NodeType.WORK;
+    public Events.NodeType nodeType() {
+        return Events.NodeType.WORK;
     }
 
     @Override
@@ -61,7 +62,7 @@ public record TicketNode(
     /**
      * Create an updated version with new status.
      */
-    public TicketNode withStatus(GraphNode.NodeStatus newStatus) {
+    public TicketNode withStatus(Events.NodeStatus newStatus) {
         return toBuilder()
                 .status(newStatus)
                 .lastUpdatedAt(Instant.now())

@@ -1,5 +1,6 @@
 package com.hayden.multiagentidelib.model.nodes;
 
+import com.hayden.utilitymodule.acp.events.Events;
 import lombok.Builder;
 
 import java.time.Instant;
@@ -16,7 +17,7 @@ public record AskPermissionNode(
         String nodeId,
         String title,
         String goal,
-        GraphNode.NodeStatus status,
+        Events.NodeStatus status,
         String parentNodeId,
         List<String> childNodeIds,
         Map<String, String> metadata,
@@ -35,12 +36,12 @@ public record AskPermissionNode(
     }
 
     @Override
-    public NodeType nodeType() {
-        return NodeType.PERMISSION;
+    public Events.NodeType nodeType() {
+        return Events.NodeType.PERMISSION;
     }
 
     @Override
-    public AskPermissionNode withStatus(NodeStatus nodeStatus) {
+    public AskPermissionNode withStatus(Events.NodeStatus nodeStatus) {
         return toBuilder()
                 .status(nodeStatus)
                 .lastUpdatedAt(Instant.now())

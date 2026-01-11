@@ -1,5 +1,7 @@
 package com.hayden.multiagentidelib.model.nodes;
 
+import com.hayden.utilitymodule.acp.events.Events;
+
 import java.time.Instant;
 import java.util.*;
 
@@ -11,7 +13,7 @@ public record SubmoduleNode(
         String nodeId,
         String title,
         String goal,
-        GraphNode.NodeStatus status,
+        Events.NodeStatus status,
         String parentNodeId,
         List<String> childNodeIds,
         Map<String, String> metadata,
@@ -40,7 +42,7 @@ public record SubmoduleNode(
     /**
      * Create an updated version with new status.
      */
-    public SubmoduleNode withStatus(GraphNode.NodeStatus newStatus) {
+    public SubmoduleNode withStatus(Events.NodeStatus newStatus) {
         return new SubmoduleNode(
                 nodeId, title, goal, newStatus, parentNodeId,
                 childNodeIds, metadata, createdAt, Instant.now(),

@@ -1,6 +1,7 @@
 package com.hayden.multiagentidelib.agent;
 
 import com.embabel.agent.api.common.SomeOf;
+import com.hayden.utilitymodule.acp.events.Events;
 import lombok.Builder;
 
 import java.util.List;
@@ -15,170 +16,155 @@ public interface AgentModels {
         RESULT_HANDOFF
     }
 
-    enum InterruptType {
-        HUMAN_REVIEW,
-        AGENT_REVIEW,
-        PAUSE,
-        STOP,
-        BRANCH,
-        PRUNE
-    }
-
     interface InterruptDescriptor {
-        InterruptType type();
+        Events.InterruptType type();
         String reason();
     }
 
     record InterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     @Builder
     record OrchestratorInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     @Builder
     record OrchestratorCollectorInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     @Builder
     record DiscoveryOrchestratorInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     @Builder
     record DiscoveryAgentInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     @Builder
     record DiscoveryCollectorInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     @Builder
     record DiscoveryAgentDispatchInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     @Builder
     record PlanningOrchestratorInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     @Builder
     record PlanningAgentInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     @Builder
     record PlanningCollectorInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     @Builder
     record PlanningAgentDispatchInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     @Builder
     record TicketOrchestratorInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     @Builder
     record TicketAgentInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     @Builder
     record TicketCollectorInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     @Builder
     record TicketAgentDispatchInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     @Builder
     record ReviewInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     record MergerInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     record ContextOrchestratorInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     record ContextAgentInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     record ContextCollectorInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
     record ContextAgentDispatchInterruptRequest(
-            InterruptType type,
+            Events.InterruptType type,
             String reason
     ) implements InterruptDescriptor {
     }
 
-    enum CollectorDecisionType {
-        ROUTE_BACK,
-        ADVANCE_PHASE,
-        STOP
-    }
-
     @Builder
     record CollectorDecision(
-            CollectorDecisionType decisionType,
+            Events.CollectorDecisionType decisionType,
             String rationale,
             String requestedPhase
     ) {

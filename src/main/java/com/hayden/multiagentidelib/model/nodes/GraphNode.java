@@ -1,5 +1,7 @@
 package com.hayden.multiagentidelib.model.nodes;
 
+import com.hayden.utilitymodule.acp.events.Events;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +14,7 @@ import java.util.Map;
 public sealed interface GraphNode
         permits AskPermissionNode, CollectorNode, DiscoveryCollectorNode, DiscoveryNode, DiscoveryOrchestratorNode, InterruptNode, MergeNode, OrchestratorNode, PlanningCollectorNode, PlanningNode, PlanningOrchestratorNode, ReviewNode, SummaryNode, TicketCollectorNode, TicketNode, TicketOrchestratorNode {
 
-    GraphNode withStatus(NodeStatus nodeStatus);
+    GraphNode withStatus(Events.NodeStatus nodeStatus);
 
     /**
      * Unique identifier for this node.
@@ -32,7 +34,7 @@ public sealed interface GraphNode
     /**
      * Current status of this node.
      */
-    NodeStatus status();
+    Events.NodeStatus status();
 
     /**
      * ID of parent node, or null if root.
@@ -62,7 +64,7 @@ public sealed interface GraphNode
     /**
      * Type/kind of this node for pattern matching.
      */
-    NodeType nodeType();
+    Events.NodeType nodeType();
 
     /**
      * Check if this node implements a specific capability.
@@ -72,32 +74,4 @@ public sealed interface GraphNode
                 || capabilityClass.isAssignableFrom(this.getClass());
     }
 
-    /**
-     * Node status values.
-     */
-    enum NodeStatus {
-        PENDING,           // Not yet ready
-        READY,             // Ready to execute
-        RUNNING,           // Currently executing
-        WAITING_REVIEW,    // Awaiting human/agent review
-        WAITING_INPUT,     // Awaiting user input
-        COMPLETED,         // Successfully completed
-        FAILED,            // Execution failed
-        CANCELED,          // Manually canceled
-        PRUNED,            // Removed from graph
-    }
-
-    /**
-     * Node type for classification.
-     */
-    enum NodeType {
-        ORCHESTRATOR,
-        PLANNING,
-        WORK,
-        HUMAN_REVIEW,
-        AGENT_REVIEW,
-        SUMMARY,
-        INTERRUPT,
-        PERMISSION
-    }
 }

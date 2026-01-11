@@ -1,6 +1,7 @@
 package com.hayden.multiagentidelib.model.nodes;
 
 import com.hayden.multiagentidelib.agent.AgentModels;
+import com.hayden.utilitymodule.acp.events.Events;
 import lombok.Builder;
 
 import java.time.Instant;
@@ -15,7 +16,7 @@ public record TicketOrchestratorNode(
         String nodeId,
         String title,
         String goal,
-        NodeStatus status,
+        Events.NodeStatus status,
         String parentNodeId,
         List<String> childNodeIds,
         Map<String, String> metadata,
@@ -32,7 +33,7 @@ public record TicketOrchestratorNode(
         InterruptContext interruptibleContext
 ) implements GraphNode, Viewable<String>, Orchestrator, HasWorktree, Interruptible {
 
-    public TicketOrchestratorNode(String nodeId, String title, String goal, NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata,
+    public TicketOrchestratorNode(String nodeId, String title, String goal, Events.NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata,
                                   Instant createdAt, Instant lastUpdatedAt, WorkTree worktree, int completedSubtasks, int totalSubtasks, String agentType, String workOutput, boolean mergeRequired, int streamingTokenCount) {
         this(nodeId, title, goal, status, parentNodeId, childNodeIds, metadata, createdAt, lastUpdatedAt,
                 worktree, completedSubtasks, totalSubtasks, agentType,
@@ -49,8 +50,8 @@ public record TicketOrchestratorNode(
     }
 
     @Override
-    public NodeType nodeType() {
-        return NodeType.WORK;
+    public Events.NodeType nodeType() {
+        return Events.NodeType.WORK;
     }
 
     @Override
@@ -61,7 +62,7 @@ public record TicketOrchestratorNode(
     /**
      * Create an updated version with new status.
      */
-    public TicketOrchestratorNode withStatus(NodeStatus newStatus) {
+    public TicketOrchestratorNode withStatus(Events.NodeStatus newStatus) {
         return toBuilder()
                 .status(newStatus)
                 .lastUpdatedAt(Instant.now())

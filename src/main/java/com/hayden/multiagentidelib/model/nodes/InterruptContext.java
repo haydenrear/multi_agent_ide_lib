@@ -1,12 +1,12 @@
 package com.hayden.multiagentidelib.model.nodes;
 
-import com.hayden.multiagentidelib.agent.AgentModels;
+import com.hayden.utilitymodule.acp.events.Events;
 
 /**
  * Immutable interrupt metadata stored on interrupt-capable nodes.
  */
 public record InterruptContext(
-        AgentModels.InterruptType type,
+        Events.InterruptType type,
         InterruptStatus status,
         String reason,
         String originNodeId,

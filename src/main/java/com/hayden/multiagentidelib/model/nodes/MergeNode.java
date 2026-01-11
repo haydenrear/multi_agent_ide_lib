@@ -1,6 +1,7 @@
 package com.hayden.multiagentidelib.model.nodes;
 
 import com.hayden.multiagentidelib.agent.AgentModels;
+import com.hayden.utilitymodule.acp.events.Events;
 import lombok.Builder;
 
 import java.time.Instant;
@@ -15,7 +16,7 @@ public record MergeNode(
         String nodeId,
         String title,
         String goal,
-        NodeStatus status,
+        Events.NodeStatus status,
         String parentNodeId,
         List<String> childNodeIds,
         Map<String, String> metadata,
@@ -28,7 +29,7 @@ public record MergeNode(
         InterruptContext interruptibleContext
 ) implements GraphNode, Viewable<String>, Interruptible {
 
-    public MergeNode(String nodeId, String title, String goal, NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata, Instant createdAt, Instant lastUpdatedAt, String summaryContent, int totalTasksCompleted, int totalTasksFailed) {
+    public MergeNode(String nodeId, String title, String goal, Events.NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata, Instant createdAt, Instant lastUpdatedAt, String summaryContent, int totalTasksCompleted, int totalTasksFailed) {
         this(nodeId, title, goal, status, parentNodeId, childNodeIds, metadata, createdAt, lastUpdatedAt,
                 summaryContent, totalTasksCompleted, totalTasksFailed, null, null);
     }
@@ -40,8 +41,8 @@ public record MergeNode(
     }
 
     @Override
-    public NodeType nodeType() {
-        return NodeType.SUMMARY;
+    public Events.NodeType nodeType() {
+        return Events.NodeType.SUMMARY;
     }
 
     public boolean isFinalMerge() {
@@ -59,7 +60,7 @@ public record MergeNode(
     /**
      * Create an updated version with new status.
      */
-    public MergeNode withStatus(NodeStatus newStatus) {
+    public MergeNode withStatus(Events.NodeStatus newStatus) {
         return toBuilder()
                 .status(newStatus)
                 .lastUpdatedAt(Instant.now())

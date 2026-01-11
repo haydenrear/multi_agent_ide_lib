@@ -1,6 +1,7 @@
 package com.hayden.multiagentidelib.model.nodes;
 
 import com.hayden.multiagentidelib.agent.AgentModels;
+import com.hayden.utilitymodule.acp.events.Events;
 import lombok.Builder;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ public record ReviewNode(
         String nodeId,
         String title,
         String goal,
-        GraphNode.NodeStatus status,
+        Events.NodeStatus status,
         String parentNodeId,
         List<String> childNodeIds,
         Map<String, String> metadata,
@@ -36,15 +37,7 @@ public record ReviewNode(
         InterruptContext interruptContext
 ) implements GraphNode, Viewable<String>, InterruptRecord {
 
-    public enum ReviewType {
-        AGENT, HUMAN;
-
-        public AgentModels.InterruptType toInterruptType() {
-            return this == AGENT ? AgentModels.InterruptType.AGENT_REVIEW : AgentModels.InterruptType.HUMAN_REVIEW;
-        }
-    }
-
-    public ReviewNode(String nodeId, String title, String goal, GraphNode.NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata, Instant createdAt, Instant lastUpdatedAt, String reviewedNodeId, String reviewContent, boolean approved, boolean humanFeedbackRequested, String agentFeedback, String reviewerAgentType, Instant reviewCompletedAt) {
+    public ReviewNode(String nodeId, String title, String goal, Events.NodeStatus status, String parentNodeId, List<String> childNodeIds, Map<String, String> metadata, Instant createdAt, Instant lastUpdatedAt, String reviewedNodeId, String reviewContent, boolean approved, boolean humanFeedbackRequested, String agentFeedback, String reviewerAgentType, Instant reviewCompletedAt) {
         this(nodeId, title, goal, status, parentNodeId, childNodeIds, metadata, createdAt, lastUpdatedAt,
                 reviewedNodeId, reviewContent, approved, humanFeedbackRequested, agentFeedback, reviewerAgentType, reviewCompletedAt, null, null);
     }
@@ -56,9 +49,9 @@ public record ReviewNode(
         if (childNodeIds == null) childNodeIds = new ArrayList<>();
         if (metadata == null) metadata = new HashMap<>();
         if (interruptContext == null) {
-            AgentModels.InterruptType type = "human".equalsIgnoreCase(reviewerAgentType)
-                    ? AgentModels.InterruptType.HUMAN_REVIEW
-                    : AgentModels.InterruptType.AGENT_REVIEW;
+            Events.InterruptType type = "human".equalsIgnoreCase(reviewerAgentType)
+                    ? Events.InterruptType.HUMAN_REVIEW
+                    : Events.InterruptType.AGENT_REVIEW;
             interruptContext = new InterruptContext(
                     type,
                     InterruptContext.InterruptStatus.REQUESTED,
@@ -72,10 +65,10 @@ public record ReviewNode(
     }
 
     @Override
-    public NodeType nodeType() {
+    public Events.NodeType nodeType() {
         return "human".equalsIgnoreCase(reviewerAgentType)
-                ? NodeType.HUMAN_REVIEW
-                : NodeType.AGENT_REVIEW;
+                ? Events.NodeType.HUMAN_REVIEW
+                : Events.NodeType.AGENT_REVIEW;
     }
 
     @Override
@@ -86,7 +79,7 @@ public record ReviewNode(
     /**
      * Create an updated version with new status.
      */
-    public ReviewNode withStatus(GraphNode.NodeStatus newStatus) {
+    public ReviewNode withStatus(Events.NodeStatus newStatus) {
         return toBuilder()
                 .status(newStatus)
                 .lastUpdatedAt(Instant.now())
