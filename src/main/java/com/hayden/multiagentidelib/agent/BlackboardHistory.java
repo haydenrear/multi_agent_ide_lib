@@ -244,8 +244,11 @@ public class BlackboardHistory {
             sb.append("Ticket orchestration has been attempted ").append(inputs.size()).append(" time(s) before.\n");
             for (int i = 0; i < inputs.size(); i++) {
                 AgentModels.TicketOrchestratorRequest req = (AgentModels.TicketOrchestratorRequest) inputs.get(i);
-                sb.append(String.format("Attempt %d: Goal='%s', Tickets Length=%d chars\n",
-                    i + 1, req.goal(), req.tickets() != null ? req.tickets().length() : 0));
+                int ticketCount = req.planningCuration() != null && req.planningCuration().curation() != null 
+                        && req.planningCuration().curation().finalizedTickets() != null 
+                        ? req.planningCuration().curation().finalizedTickets().size() : 0;
+                sb.append(String.format("Attempt %d: Goal='%s', Ticket Count=%d\n",
+                    i + 1, req.goal(), ticketCount));
             }
             sb.append("Consider if ticket execution order or dependencies need adjustment.\n");
             return sb.toString();
