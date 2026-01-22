@@ -50,11 +50,8 @@ public class UiStateService {
         }
     }
 
-    public UiDiffResult applyDiff(UiDiffRequest request) {
-        if (request == null || request.sessionId() == null || request.sessionId().isBlank()) {
-            return new UiDiffResult("rejected", null, "missing_session", "Session id is required.");
-        }
-        Events.UiStateSnapshot current = getSnapshot(request.sessionId());
+    public UiDiffResult applyDiff(UiDiffRequest request, String sessionId) {
+        Events.UiStateSnapshot current = getSnapshot(sessionId);
         if (current == null) {
             return new UiDiffResult("rejected", null, "missing_snapshot", "No UI snapshot available.");
         }
@@ -65,7 +62,7 @@ public class UiStateService {
                     "Base revision does not match current snapshot.");
         }
         Object nextRenderTree = mergeRenderTree(current.renderTree(), request.diff());
-        Events.UiStateSnapshot updated = captureSnapshot(request.sessionId(), nextRenderTree);
+        Events.UiStateSnapshot updated = captureSnapshot(sessionId, nextRenderTree);
         return new UiDiffResult("applied", updated != null ? updated.revision() : null, null, "Diff applied.");
     }
 

@@ -31,6 +31,7 @@ import static com.hayden.utilitymodule.acp.AcpChatModel.MCP_SESSION_HEADER;
 public class AgentTools implements ToolCarrier {
 
 
+    public static final String SESSION_ID_MISSING_MESSAGE = "Session id is required - let them know that it failed - this is not your fault!";
     private final EventBus eventBus;
     private final UiStateService uiStateService;
 
@@ -48,7 +49,7 @@ public class AgentTools implements ToolCarrier {
             return new GuiEmissionResult("rejected", "invalid_payload", "Payload is required.", true);
         }
         if (!StringUtils.hasText(sessionId)) {
-            return new GuiEmissionResult("rejected", "missing_session", "Session id is required.", true);
+            return new GuiEmissionResult("rejected", "missing_session", SESSION_ID_MISSING_MESSAGE, true);
         }
         Object renderTree = payload.renderTree() != null ? payload.renderTree() : payload.a2uiMessages();
         if (renderTree == null) {
@@ -102,7 +103,7 @@ public class AgentTools implements ToolCarrier {
             return new GuiEmissionResult("rejected", "invalid_payload", "Feedback payload is required.", true);
         }
         if (!StringUtils.hasText(sessionId)) {
-            return new GuiEmissionResult("rejected", "missing_session", "Session id is required.", true);
+            return new GuiEmissionResult("rejected", "missing_session", SESSION_ID_MISSING_MESSAGE, true);
         }
         if (!StringUtils.hasText(feedback.eventId())) {
             return new GuiEmissionResult("rejected", "missing_event", "Event id is required.", true);
@@ -138,14 +139,14 @@ public class AgentTools implements ToolCarrier {
             return new UiDiffResult("rejected", null, "invalid_payload", "Diff payload is required.");
         }
         if (!StringUtils.hasText(sessionId)) {
-            return new UiDiffResult("rejected", null, "missing_session", "Session id is required.");
+            return new UiDiffResult("rejected", null, "missing_session", SESSION_ID_MISSING_MESSAGE);
         }
         UiDiffRequest resolved = new UiDiffRequest(
                 request.baseRevision(),
                 request.diff(),
                 request.summary()
         );
-        UiDiffResult result = uiStateService.applyDiff(resolved);
+        UiDiffResult result = uiStateService.applyDiff(resolved, sessionId);
         Events.UiStateSnapshot snapshot = uiStateService.getSnapshot(sessionId);
 
         if ("applied".equalsIgnoreCase(result.status()) && snapshot != null) {
