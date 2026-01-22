@@ -47,4 +47,44 @@ public class PromptAssembly {
     public List<PromptContributor> getContributors(PromptContext context) {
         return registry.getContributors(context);
     }
+    
+    /**
+     * Assemble just the prompt contributions without the base prompt.
+     * This is useful for injecting contributions into Jinja templates.
+     * 
+     * @param context The prompt context
+     * @return The assembled contributions as a string, or empty string if no contributions
+     */
+    public String assembleContributions(PromptContext context) {
+        if (registry == null) {
+            return "";
+        }
+        List<PromptContributor> contributors = getContributors(context);
+        if (contributors.isEmpty()) {
+            return "";
+        }
+        StringBuilder assembled = new StringBuilder();
+        assembled.append("--- Tool Prompt Contributions ---\n");
+        for (PromptContributor contributor : contributors) {
+            if (contributor == null) {
+                continue;
+            }
+            String contribution = null;
+            try {
+                contribution = contributor.contribute(context);
+            } catch (RuntimeException ignored) {
+                continue;
+            }
+            if (contribution == null || contribution.isBlank()) {
+                continue;
+            }
+            assembled.append("\n[")
+                    .append(contributor.name())
+                    .append("]\n")
+                    .append(contribution.trim())
+                    .append("\n");
+        }
+        assembled.append("--- End Tool Prompt Contributions ---");
+        return assembled.toString();
+    }
 }

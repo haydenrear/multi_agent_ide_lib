@@ -1,7 +1,6 @@
 package com.hayden.multiagentidelib.model.ui;
 
 public record GuiEventPayload(
-        String sessionId,
         String renderer,
         String title,
         Object props,
@@ -9,4 +8,5 @@ public record GuiEventPayload(
         Object renderTree,
         String summary
 ) {
+
 }

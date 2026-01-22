@@ -43,6 +43,9 @@ public class PromptContextFactory {
         ContextId contextId = null;
         List<UpstreamContext> upstreamContexts = new ArrayList<>();
         PreviousContext previousContext = null;
+        AgentModels.AgentRequest request = input instanceof AgentModels.AgentRequest
+                ? (AgentModels.AgentRequest) input
+                : null;
 
         switch (input) {
             case AgentModels.OrchestratorRequest req -> {
@@ -62,6 +65,11 @@ public class PromptContextFactory {
             case AgentModels.DiscoveryOrchestratorRequest req -> {
                 contextId = resolve(req.contextId());
                 // Discovery orchestrator is at the start - no upstream contexts
+                previousContext = req.previousContext();
+            }
+            case AgentModels.DiscoveryAgentResults req -> {
+                contextId = resolve(req.contextId());
+                // Discovery agent has no upstream curation
                 previousContext = req.previousContext();
             }
             case AgentModels.DiscoveryAgentRequest req -> {
@@ -129,6 +137,7 @@ public class PromptContextFactory {
                 upstreamContexts,
                 previousContext,
                 blackboardHistory,
+                request,
                 Map.of()
         );
     }
@@ -150,6 +159,7 @@ public class PromptContextFactory {
                 upstreamContexts != null ? upstreamContexts : List.of(),
                 previousContext,
                 blackboardHistory,
+                null,
                 Map.of()
         );
     }
@@ -174,6 +184,7 @@ public class PromptContextFactory {
                 contexts,
                 previousContext,
                 blackboardHistory,
+                null,
                 Map.of()
         );
     }

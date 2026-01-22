@@ -1,5 +1,8 @@
 package com.hayden.multiagentidelib.agent;
 
+import com.embabel.agent.api.common.OperationContext;
+import com.hayden.multiagentidelib.service.RequestEnrichment;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +16,80 @@ import java.util.stream.Collectors;
  * unwanted state accumulation through clearing.
  */
 public class BlackboardHistory {
+
+    public static History getBlackboardHistory(OperationContext context) {
+        if (context == null) {
+            return null;
+        }
+        return context.last(History.class);
+    }
+
+    public static <T> T getLastFromHistory(OperationContext context, Class<T> inputType) {
+        History history = getBlackboardHistory(context);
+        if (history == null) {
+            return null;
+        }
+        return history.getLastOfType(inputType).orElse(null);
+    }
+
+    /**
+     * Register an input in the blackboard history and hide it from the blackboard.
+     * This should be called at the start of each action instead of using clearBlackboard=true.
+     *
+     * @param context The operation context
+     * @param actionName The name of the action being executed
+     * @param input The input object to register and hide
+     * @return Updated history with the new entry
+     */
+    public static History registerAndHideInput(
+            OperationContext context,
+            String actionName,
+            Object input
+    ) {
+        return registerAndHideInput(context, actionName, input, null);
+    }
+
+    /**
+     * Register an input in the blackboard history and hide it from the blackboard.
+     * This overload allows enriching the input with ContextId and PreviousContext before storing.
+     *
+     * @param context The operation context
+     * @param actionName The name of the action being executed
+     * @param input The input object to register and hide
+     * @param requestEnrichment Optional enrichment service to set ContextId and PreviousContext
+     * @return Updated history with the new entry
+     */
+    public static History registerAndHideInput(
+            OperationContext context,
+            String actionName,
+            Object input,
+            RequestEnrichment requestEnrichment
+    ) {
+        // Get or create history from context
+        History history = getBlackboardHistory(context);
+
+        if (history == null) {
+            history = new History();
+        }
+
+        // Enrich the input with ContextId and PreviousContext if enrichment service is provided
+        Object enrichedInput = input;
+        if (requestEnrichment != null && input != null) {
+            enrichedInput = requestEnrichment.enrich(input, context);
+        }
+
+        // Add the enriched input to history
+        History updatedHistory = history.withEntry(actionName, enrichedInput);
+
+        if (enrichedInput != null) {
+            context.getAgentProcess().clear();
+        }
+
+        // Add updated history back to context
+        context.getAgentProcess().addObject(updatedHistory);
+
+        return updatedHistory;
+    }
 
     /**
      * Functional interface for providing contextual prompts based on history.
@@ -52,6 +129,10 @@ public class BlackboardHistory {
     ) {
         public History() {
             this(new ArrayList<>());
+        }
+
+        boolean detectLoop(OperationContext context, Class<?> inputType, int threshold) {
+            return this.detectLoop(inputType, threshold);
         }
 
         /**
@@ -125,181 +206,6 @@ public class BlackboardHistory {
         }
 
         /**
-         * Generate a PromptProvider for a specific input type.
-         * This uses type-specific logic to augment prompts with historical context.
-         */
-        public <T> PromptProvider generatePromptProvider(Class<T> type) {
-            List<T> previousInputs = getEntriesOfType(type);
-            
-            if (previousInputs.isEmpty()) {
-                return PromptProvider.identity();
-            }
-
-            return basePrompt -> {
-                StringBuilder augmented = new StringBuilder(basePrompt);
-                augmented.append("\n\n--- Historical Context ---\n");
-                
-                // Type-specific prompt augmentation
-                if (type.equals(AgentModels.OrchestratorRequest.class)) {
-                    augmented.append(buildOrchestratorContext(previousInputs));
-                } else if (type.equals(AgentModels.OrchestratorCollectorRequest.class)) {
-                    augmented.append(buildOrchestratorCollectorContext(previousInputs));
-                } else if (type.equals(AgentModels.DiscoveryOrchestratorRequest.class)) {
-                    augmented.append(buildDiscoveryOrchestratorContext(previousInputs));
-                } else if (type.equals(AgentModels.DiscoveryCollectorRequest.class)) {
-                    augmented.append(buildDiscoveryCollectorContext(previousInputs));
-                } else if (type.equals(AgentModels.PlanningOrchestratorRequest.class)) {
-                    augmented.append(buildPlanningOrchestratorContext(previousInputs));
-                } else if (type.equals(AgentModels.PlanningCollectorRequest.class)) {
-                    augmented.append(buildPlanningCollectorContext(previousInputs));
-                } else if (type.equals(AgentModels.TicketOrchestratorRequest.class)) {
-                    augmented.append(buildTicketOrchestratorContext(previousInputs));
-                } else if (type.equals(AgentModels.TicketCollectorRequest.class)) {
-                    augmented.append(buildTicketCollectorContext(previousInputs));
-                } else if (type.equals(AgentModels.ReviewRequest.class)) {
-                    augmented.append(buildReviewContext(previousInputs));
-                } else if (type.equals(AgentModels.MergerRequest.class)) {
-                    augmented.append(buildMergerContext(previousInputs));
-                } else {
-                    // Generic context for unknown types
-                    augmented.append(buildGenericContext(previousInputs));
-                }
-                
-                augmented.append("--- End Historical Context ---\n\n");
-                
-                return augmented.toString();
-            };
-        }
-
-        private <T> String buildOrchestratorContext(List<T> inputs) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("This workflow orchestration has been attempted ").append(inputs.size()).append(" time(s) before.\n");
-            for (int i = 0; i < inputs.size(); i++) {
-                AgentModels.OrchestratorRequest req = (AgentModels.OrchestratorRequest) inputs.get(i);
-                sb.append(String.format("Attempt %d: Goal='%s', Phase='%s'\n", i + 1, req.goal(), req.phase()));
-            }
-            sb.append("Please consider why previous attempts did not complete successfully.\n");
-            return sb.toString();
-        }
-
-        private <T> String buildOrchestratorCollectorContext(List<T> inputs) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Workflow consolidation has been attempted ").append(inputs.size()).append(" time(s) before.\n");
-            for (int i = 0; i < inputs.size(); i++) {
-                AgentModels.OrchestratorCollectorRequest req = (AgentModels.OrchestratorCollectorRequest) inputs.get(i);
-                sb.append(String.format("Attempt %d: Goal='%s', Phase='%s'\n", i + 1, req.goal(), req.phase()));
-            }
-            sb.append("Review the previous routing decisions and ensure progress is being made.\n");
-            return sb.toString();
-        }
-
-        private <T> String buildDiscoveryOrchestratorContext(List<T> inputs) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Discovery orchestration has been attempted ").append(inputs.size()).append(" time(s) before.\n");
-            for (int i = 0; i < inputs.size(); i++) {
-                AgentModels.DiscoveryOrchestratorRequest req = (AgentModels.DiscoveryOrchestratorRequest) inputs.get(i);
-                sb.append(String.format("Attempt %d: Goal='%s'\n", i + 1, req.goal()));
-            }
-            sb.append("Consider whether the discovery scope needs adjustment or if different subdomains should be explored.\n");
-            return sb.toString();
-        }
-
-        private <T> String buildDiscoveryCollectorContext(List<T> inputs) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Discovery consolidation has been attempted ").append(inputs.size()).append(" time(s) before.\n");
-            for (int i = 0; i < inputs.size(); i++) {
-                AgentModels.DiscoveryCollectorRequest req = (AgentModels.DiscoveryCollectorRequest) inputs.get(i);
-                sb.append(String.format("Attempt %d: Goal='%s', Discovery Results Length=%d chars\n", 
-                    i + 1, req.goal(), req.discoveryResults() != null ? req.discoveryResults().length() : 0));
-            }
-            sb.append("Ensure the consolidated discovery output is comprehensive and addresses all aspects of the goal.\n");
-            return sb.toString();
-        }
-
-        private <T> String buildPlanningOrchestratorContext(List<T> inputs) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Planning orchestration has been attempted ").append(inputs.size()).append(" time(s) before.\n");
-            for (int i = 0; i < inputs.size(); i++) {
-                AgentModels.PlanningOrchestratorRequest req = (AgentModels.PlanningOrchestratorRequest) inputs.get(i);
-                sb.append(String.format("Attempt %d: Goal='%s'\n", i + 1, req.goal()));
-            }
-            sb.append("Review if the planning approach needs to be broken down differently.\n");
-            return sb.toString();
-        }
-
-        private <T> String buildPlanningCollectorContext(List<T> inputs) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Planning consolidation has been attempted ").append(inputs.size()).append(" time(s) before.\n");
-            for (int i = 0; i < inputs.size(); i++) {
-                AgentModels.PlanningCollectorRequest req = (AgentModels.PlanningCollectorRequest) inputs.get(i);
-                sb.append(String.format("Attempt %d: Goal='%s', Planning Results Length=%d chars\n",
-                    i + 1, req.goal(), req.planningResults() != null ? req.planningResults().length() : 0));
-            }
-            sb.append("Ensure tickets are well-defined, have clear dependencies, and cover all necessary work.\n");
-            return sb.toString();
-        }
-
-        private <T> String buildTicketOrchestratorContext(List<T> inputs) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Ticket orchestration has been attempted ").append(inputs.size()).append(" time(s) before.\n");
-            for (int i = 0; i < inputs.size(); i++) {
-                AgentModels.TicketOrchestratorRequest req = (AgentModels.TicketOrchestratorRequest) inputs.get(i);
-                int ticketCount = req.planningCuration() != null && req.planningCuration().curation() != null 
-                        && req.planningCuration().curation().finalizedTickets() != null 
-                        ? req.planningCuration().curation().finalizedTickets().size() : 0;
-                sb.append(String.format("Attempt %d: Goal='%s', Ticket Count=%d\n",
-                    i + 1, req.goal(), ticketCount));
-            }
-            sb.append("Consider if ticket execution order or dependencies need adjustment.\n");
-            return sb.toString();
-        }
-
-        private <T> String buildTicketCollectorContext(List<T> inputs) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Ticket consolidation has been attempted ").append(inputs.size()).append(" time(s) before.\n");
-            for (int i = 0; i < inputs.size(); i++) {
-                AgentModels.TicketCollectorRequest req = (AgentModels.TicketCollectorRequest) inputs.get(i);
-                sb.append(String.format("Attempt %d: Goal='%s', Ticket Results Length=%d chars\n",
-                    i + 1, req.goal(), req.ticketResults() != null ? req.ticketResults().length() : 0));
-            }
-            sb.append("Review ticket execution results and determine if any tickets need to be retried or if the workflow can proceed.\n");
-            return sb.toString();
-        }
-
-        private <T> String buildReviewContext(List<T> inputs) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Review has been requested ").append(inputs.size()).append(" time(s) before.\n");
-            for (int i = 0; i < inputs.size(); i++) {
-                AgentModels.ReviewRequest req = (AgentModels.ReviewRequest) inputs.get(i);
-                sb.append(String.format("Attempt %d: Criteria='%s', Content Length=%d chars\n",
-                    i + 1, req.criteria(), req.content() != null ? req.content().length() : 0));
-            }
-            sb.append("Consider if the content has improved since the last review attempt.\n");
-            return sb.toString();
-        }
-
-        private <T> String buildMergerContext(List<T> inputs) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Merge has been attempted ").append(inputs.size()).append(" time(s) before.\n");
-            for (int i = 0; i < inputs.size(); i++) {
-                AgentModels.MergerRequest req = (AgentModels.MergerRequest) inputs.get(i);
-                sb.append(String.format("Attempt %d: Summary='%s', Conflict Files='%s'\n",
-                    i + 1, req.mergeSummary(), req.conflictFiles()));
-            }
-            sb.append("Ensure merge conflicts are properly resolved before proceeding.\n");
-            return sb.toString();
-        }
-
-        private <T> String buildGenericContext(List<T> inputs) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("This action has been attempted ").append(inputs.size()).append(" time(s) before.\n");
-            for (int i = 0; i < inputs.size(); i++) {
-                sb.append(String.format("Attempt %d: %s\n", i + 1, inputs.get(i).toString()));
-            }
-            return sb.toString();
-        }
-
-        /**
          * Check if we're in a loop by detecting repeated patterns
          */
         public boolean detectLoop(Class<?> type, int threshold) {
@@ -326,6 +232,10 @@ public class BlackboardHistory {
             );
 
             return summary.toString();
+        }
+
+        public Object last() {
+            return Optional.ofNullable(entries.getLast()).flatMap(e -> Optional.ofNullable(e.input));
         }
     }
 }

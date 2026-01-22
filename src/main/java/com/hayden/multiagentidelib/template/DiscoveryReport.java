@@ -1,5 +1,6 @@
 package com.hayden.multiagentidelib.template;
 
+import com.hayden.multiagentidelib.agent.AgentContext;
 import com.hayden.multiagentidelib.agent.ContextId;
 
 import java.util.List;
@@ -20,7 +21,34 @@ public record DiscoveryReport(
         List<String> integrationPoints,
         Map<String, Double> relevanceScores,
         List<MemoryReference> memoryReferences
-) {
+) implements AgentContext {
+
+    @Override
+    public String prettyPrint() {
+        StringBuilder builder = new StringBuilder();
+        if (architectureOverview != null && !architectureOverview.isBlank()) {
+            builder.append("Architecture Overview:\n").append(architectureOverview.trim()).append("\n");
+        }
+        if (keyPatterns != null && !keyPatterns.isEmpty()) {
+            builder.append("Key Patterns:\n");
+            for (String pattern : keyPatterns) {
+                if (pattern == null || pattern.isBlank()) {
+                    continue;
+                }
+                builder.append("- ").append(pattern.trim()).append("\n");
+            }
+        }
+        if (integrationPoints != null && !integrationPoints.isEmpty()) {
+            builder.append("Integration Points:\n");
+            for (String point : integrationPoints) {
+                if (point == null || point.isBlank()) {
+                    continue;
+                }
+                builder.append("- ").append(point.trim()).append("\n");
+            }
+        }
+        return builder.toString().trim();
+    }
 
     public record FileReference(
             String filePath,

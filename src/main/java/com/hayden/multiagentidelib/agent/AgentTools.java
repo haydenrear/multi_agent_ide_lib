@@ -1,9 +1,9 @@
 package com.hayden.multiagentidelib.agent;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.hayden.commitdiffcontext.cdc_utils.SetFromHeader;
 import com.hayden.commitdiffcontext.mcp.ToolCarrier;
-import com.hayden.utilitymodule.acp.AcpChatModel;
 import com.hayden.utilitymodule.acp.events.EventBus;
-import com.hayden.utilitymodule.acp.events.McpRequestContext;
 import com.hayden.utilitymodule.acp.events.Events;
 import com.hayden.multiagentidelib.model.ui.GuiEmissionResult;
 import com.hayden.multiagentidelib.model.ui.GuiEventPayload;
@@ -19,6 +19,8 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import static com.hayden.utilitymodule.acp.AcpChatModel.MCP_SESSION_HEADER;
 
 /**
  * Tool definitions for Embabel agents.
@@ -37,11 +39,14 @@ public class AgentTools implements ToolCarrier {
      * @return
      */
     @org.springframework.ai.tool.annotation.Tool(description = "Emit gui event to user")
-    public GuiEmissionResult emitGuiEvent(GuiEventPayload payload) {
+    public GuiEmissionResult emitGuiEvent(
+            @SetFromHeader(MCP_SESSION_HEADER)
+            String sessionId,
+            com.hayden.utilitymodule.mcp.ctx.McpRequestContext.McpToolContext requestContext,
+            GuiEventPayload payload) {
         if (payload == null) {
             return new GuiEmissionResult("rejected", "invalid_payload", "Payload is required.", true);
         }
-        String sessionId = resolveSessionId(payload.sessionId());
         if (!StringUtils.hasText(sessionId)) {
             return new GuiEmissionResult("rejected", "missing_session", "Session id is required.", true);
         }
@@ -75,9 +80,11 @@ public class AgentTools implements ToolCarrier {
     }
 
     @org.springframework.ai.tool.annotation.Tool(description = "Retrieve the current GUI snapshot for a session")
-    public Events.UiStateSnapshot retrieveGui(String sessionId) {
-        String resolvedSessionId = resolveSessionId(sessionId);
-        String safeSessionId = StringUtils.hasText(resolvedSessionId) ? resolvedSessionId : "unknown";
+    public Events.UiStateSnapshot retrieveGui(
+            @SetFromHeader(MCP_SESSION_HEADER)
+            String sessionId
+    ) {
+        String safeSessionId = StringUtils.hasText(sessionId) ? sessionId : "unknown";
         Events.UiStateSnapshot snapshot = uiStateService.getSnapshot(safeSessionId);
         if (snapshot != null) {
             return snapshot;
@@ -86,11 +93,14 @@ public class AgentTools implements ToolCarrier {
     }
 
     @org.springframework.ai.tool.annotation.Tool(description = "Submit feedback for a UI event")
-    public GuiEmissionResult submitGuiFeedback(UiEventFeedback feedback) {
+    public GuiEmissionResult submitGuiFeedback(
+            @SetFromHeader(MCP_SESSION_HEADER)
+            String sessionId,
+            UiEventFeedback feedback
+    ) {
         if (feedback == null) {
             return new GuiEmissionResult("rejected", "invalid_payload", "Feedback payload is required.", true);
         }
-        String sessionId = resolveSessionId(feedback.sessionId());
         if (!StringUtils.hasText(sessionId)) {
             return new GuiEmissionResult("rejected", "missing_session", "Session id is required.", true);
         }
@@ -119,16 +129,18 @@ public class AgentTools implements ToolCarrier {
     }
 
     @org.springframework.ai.tool.annotation.Tool(description = "Apply a UI diff to the current GUI state")
-    public UiDiffResult performUiDiff(UiDiffRequest request) {
+    public UiDiffResult performUiDiff(
+            @SetFromHeader(MCP_SESSION_HEADER)
+            String sessionId,
+            UiDiffRequest request
+    ) {
         if (request == null) {
             return new UiDiffResult("rejected", null, "invalid_payload", "Diff payload is required.");
         }
-        String sessionId = resolveSessionId(request.sessionId());
         if (!StringUtils.hasText(sessionId)) {
             return new UiDiffResult("rejected", null, "missing_session", "Session id is required.");
         }
         UiDiffRequest resolved = new UiDiffRequest(
-                sessionId,
                 request.baseRevision(),
                 request.diff(),
                 request.summary()
@@ -159,11 +171,5 @@ public class AgentTools implements ToolCarrier {
         return result;
     }
 
-    private String resolveSessionId(String sessionId) {
-        if (StringUtils.hasText(sessionId)) {
-            return sessionId;
-        }
-        return McpRequestContext.getHeader(AcpChatModel.AcpChatModel.UI_SESSION_HEADER());
-    }
 
 }
