@@ -5,9 +5,30 @@ import com.hayden.multiagentidelib.template.PlanningTicket;
 
 import java.util.List;
 
-public sealed interface UpstreamContext permits UpstreamContext.DiscoveryAgentUpstreamContext, UpstreamContext.DiscoveryCollectorContext, UpstreamContext.DiscoveryOrchestratorUpstreamContext, UpstreamContext.MergerUpstreamContext, UpstreamContext.OrchestratorCollectorUpstreamContext, UpstreamContext.OrchestratorUpstreamContext, UpstreamContext.PlanningAgentUpstreamContext, UpstreamContext.PlanningCollectorContext, UpstreamContext.PlanningOrchestratorUpstreamContext, UpstreamContext.ReviewUpstreamContext, UpstreamContext.TicketAgentUpstreamContext, UpstreamContext.TicketCollectorContext, UpstreamContext.TicketOrchestratorUpstreamContext {
+public sealed interface UpstreamContext extends AgentContext permits UpstreamContext.DiscoveryAgentUpstreamContext, UpstreamContext.DiscoveryCollectorContext, UpstreamContext.DiscoveryOrchestratorUpstreamContext, UpstreamContext.MergerUpstreamContext, UpstreamContext.OrchestratorCollectorUpstreamContext, UpstreamContext.OrchestratorUpstreamContext, UpstreamContext.PlanningAgentUpstreamContext, UpstreamContext.PlanningCollectorContext, UpstreamContext.PlanningOrchestratorUpstreamContext, UpstreamContext.ReviewUpstreamContext, UpstreamContext.TicketAgentUpstreamContext, UpstreamContext.TicketCollectorContext, UpstreamContext.TicketOrchestratorUpstreamContext {
 
     ContextId contextId();
+
+    @Override
+    default String prettyPrint(AgentSerializationCtx serializationCtx) {
+        return switch (serializationCtx) {
+            case AgentSerializationCtx.StdReceiverSerialization stdReceiverSerialization ->
+                    prettyPrint();
+            case AgentSerializationCtx.InterruptSerialization interruptSerialization ->
+                    prettyPrintInterruptContinuation();
+            case AgentSerializationCtx.GoalResolutionSerialization goalResolutionSerialization ->
+                    prettyPrint();
+            case AgentSerializationCtx.MergeSummarySerialization mergeSummarySerialization ->
+                    prettyPrint();
+            case AgentSerializationCtx.ResultsSerialization resultsSerialization ->
+                    prettyPrint();
+        };
+    }
+
+    @Override
+    default String prettyPrint() {
+        return toString();
+    }
 
     record OrchestratorUpstreamContext(
             ContextId contextId,
@@ -86,6 +107,7 @@ public sealed interface UpstreamContext permits UpstreamContext.DiscoveryAgentUp
             String selectionRationale
     ) implements UpstreamContext, ConsolidationTemplate.Curation {
         
+        @Override
         public String prettyPrint() {
             if (curation == null) {
                 return "";
@@ -110,6 +132,7 @@ public sealed interface UpstreamContext permits UpstreamContext.DiscoveryAgentUp
             String selectionRationale
     ) implements UpstreamContext, ConsolidationTemplate.Curation {
         
+        @Override
         public String prettyPrint() {
             if (curation == null) {
                 return "";
@@ -153,6 +176,7 @@ public sealed interface UpstreamContext permits UpstreamContext.DiscoveryAgentUp
             String selectionRationale
     ) implements UpstreamContext, ConsolidationTemplate.Curation {
         
+        @Override
         public String prettyPrint() {
             if (curation == null) {
                 return "";
