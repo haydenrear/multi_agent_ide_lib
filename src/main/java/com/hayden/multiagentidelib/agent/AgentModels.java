@@ -2,9 +2,7 @@ package com.hayden.multiagentidelib.agent;
 
 import com.embabel.agent.api.common.SomeOf;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.hayden.multiagentidelib.template.ConsolidationTemplate;
 import com.hayden.multiagentidelib.template.DelegationTemplate;
 import com.hayden.multiagentidelib.template.DiscoveryReport;
@@ -28,7 +26,37 @@ public interface AgentModels {
     interface AgentResult extends AgentContext {
     }
 
-    sealed interface AgentRequest extends AgentContext permits ContextOrchestratorRequest, DiscoveryAgentRequest, DiscoveryAgentRequests, DiscoveryAgentResults, DiscoveryCollectorRequest, DiscoveryOrchestratorRequest, InterruptRequest, MergerRequest, OrchestratorCollectorRequest, OrchestratorRequest, PlanningAgentRequest, PlanningAgentRequests, PlanningAgentResults, PlanningCollectorRequest, PlanningOrchestratorRequest, ReviewRequest, TicketAgentRequest, TicketAgentRequests, TicketAgentResults, TicketCollectorRequest, TicketOrchestratorRequest
+    sealed interface AgentRequest extends AgentContext
+            permits
+//          Here for demonstration purposes - do not delete this comment or reformat this permits clause
+//          Here is the happy path ordering for the requests
+            OrchestratorRequest,
+            DiscoveryOrchestratorRequest,
+            DiscoveryAgentRequests,
+            DiscoveryAgentRequest,
+            DiscoveryAgentResults,
+            DiscoveryCollectorRequest,
+            PlanningOrchestratorRequest,
+            PlanningAgentRequests,
+            PlanningAgentRequest,
+            PlanningAgentResults,
+            PlanningCollectorRequest,
+            TicketOrchestratorRequest,
+            TicketAgentRequests,
+            TicketAgentRequest,
+            TicketAgentResults,
+            TicketCollectorRequest,
+            OrchestratorCollectorRequest,
+//          gets routed to by agents to refine context or after
+//            merger/review to reroute to requesting agent,
+//            or when in invalid status or degenerate loop
+            ContextOrchestratorRequest,
+//          There exist various interrupt request types for each
+//            of above agents associated with the requests, can reroute,
+//            then get rerouted back
+            InterruptRequest,
+            MergerRequest,
+            ReviewRequest
     {
         String prettyPrintInterruptContinuation();
 
@@ -1571,6 +1599,29 @@ public interface AgentModels {
     }
 
     /**
+     * Embabel uses SomeOf to determine which fields are requests to be added to the blackboard.
+     * SomeOf contains in it's fields the requests that are added to the blackboard.
+     * I've had quite a few issues with inability to interpolate Embabel for this.
+     */
+    sealed interface Routing extends SomeOf permits
+            OrchestratorRouting,
+            OrchestratorCollectorRouting,
+            DiscoveryOrchestratorRouting,
+            DiscoveryAgentRouting,
+            DiscoveryCollectorRouting,
+            DiscoveryAgentDispatchRouting,
+            PlanningOrchestratorRouting,
+            PlanningAgentRouting,
+            PlanningCollectorRouting,
+            PlanningAgentDispatchRouting,
+            TicketOrchestratorRouting,
+            TicketAgentRouting,
+            TicketCollectorRouting,
+            TicketAgentDispatchRouting,
+            ReviewRouting,
+            MergerRouting {}
+
+    /**
      * Routing type for orchestrator - routes to interrupt, collector, or discovery orchestrator.
      * Note: Routing types do NOT implement DelegationTemplate - they are routing containers.
      */
@@ -1583,7 +1634,7 @@ public interface AgentModels {
             OrchestratorCollectorRequest collectorRequest,
             @JsonPropertyDescription("Route to discovery orchestrator to start discovery.")
             DiscoveryOrchestratorRequest orchestratorRequest
-    ) implements SomeOf {
+    ) implements Routing {
         public OrchestratorRouting(OrchestratorInterruptRequest interruptRequest, OrchestratorCollectorRequest collectorRequest) {
             this(interruptRequest, collectorRequest, null);
         }
@@ -1608,7 +1659,7 @@ public interface AgentModels {
             ReviewRequest reviewRequest,
             @JsonPropertyDescription("Route to merger agent.")
             MergerRequest mergerRequest
-    ) implements SomeOf {
+    ) implements Routing {
         public OrchestratorCollectorRouting(OrchestratorCollectorResult collectorResult) {
             this(null, collectorResult, null, null, null, null, null, null);
         }
@@ -1810,7 +1861,7 @@ public interface AgentModels {
             DiscoveryAgentRequests agentRequests,
             @JsonPropertyDescription("Route to discovery collector.")
             DiscoveryCollectorRequest collectorRequest
-    ) implements SomeOf {
+    ) implements Routing {
     }
 
     @Builder(toBuilder=true)
@@ -1822,7 +1873,7 @@ public interface AgentModels {
             DiscoveryAgentResult agentResult,
             @JsonPropertyDescription("Optional route to planning orchestrator.")
             AgentModels.PlanningOrchestratorRequest planningOrchestratorRequest
-    ) implements SomeOf {
+    ) implements Routing {
         public DiscoveryAgentRouting(DiscoveryAgentInterruptRequest interruptRequest, DiscoveryAgentResult agentResult) {
             this(interruptRequest, agentResult, null);
         }
@@ -1849,7 +1900,7 @@ public interface AgentModels {
             ReviewRequest reviewRequest,
             @JsonPropertyDescription("Route to merger agent.")
             MergerRequest mergerRequest
-    ) implements SomeOf {
+    ) implements Routing {
     }
 
     @Builder(toBuilder=true)
@@ -1859,7 +1910,7 @@ public interface AgentModels {
             DiscoveryAgentDispatchInterruptRequest interruptRequest,
             @JsonPropertyDescription("Route to discovery collector with aggregated results.")
             DiscoveryCollectorRequest collectorRequest
-    ) implements SomeOf { }
+    ) implements Routing { }
 
     /**
      * Request for planning orchestrator. Uses typed curation field from discovery collector.
@@ -2040,7 +2091,7 @@ public interface AgentModels {
             PlanningAgentRequests agentRequests,
             @JsonPropertyDescription("Route to planning collector.")
             PlanningCollectorRequest collectorRequest
-    ) implements SomeOf {
+    ) implements Routing {
     }
 
     @Builder(toBuilder=true)
@@ -2050,7 +2101,7 @@ public interface AgentModels {
             PlanningAgentInterruptRequest interruptRequest,
             @JsonPropertyDescription("Planning agent result payload.")
             PlanningAgentResult agentResult
-    ) implements SomeOf {
+    ) implements Routing {
     }
 
     @Builder(toBuilder=true)
@@ -2072,7 +2123,7 @@ public interface AgentModels {
             TicketOrchestratorRequest ticketOrchestratorRequest,
             @JsonPropertyDescription("Route to orchestrator collector.")
             OrchestratorCollectorRequest orchestratorCollectorRequest
-    ) implements SomeOf {
+    ) implements Routing {
         public PlanningCollectorRouting(PlanningCollectorInterruptRequest interruptRequest, PlanningCollectorResult collectorResult, PlanningOrchestratorRequest planningRequest, DiscoveryOrchestratorRequest discoveryOrchestratorRequest, ReviewRequest reviewRequest, MergerRequest mergerRequest) {
             this(interruptRequest, collectorResult, planningRequest, discoveryOrchestratorRequest, reviewRequest, mergerRequest, null, null);
         }
@@ -2085,7 +2136,7 @@ public interface AgentModels {
             PlanningAgentDispatchInterruptRequest interruptRequest,
             @JsonPropertyDescription("Route to planning collector with aggregated results.")
             PlanningCollectorRequest planningCollectorRequest
-    ) implements SomeOf {
+    ) implements Routing {
     }
 
     /**
@@ -2274,7 +2325,7 @@ public interface AgentModels {
             TicketAgentRequests agentRequests,
             @JsonPropertyDescription("Route to ticket collector.")
             TicketCollectorRequest collectorRequest
-    ) implements SomeOf {
+    ) implements Routing {
     }
 
     @Builder(toBuilder=true)
@@ -2284,7 +2335,7 @@ public interface AgentModels {
             TicketAgentInterruptRequest interruptRequest,
             @JsonPropertyDescription("Ticket agent result payload.")
             TicketAgentResult agentResult
-    ) implements SomeOf {
+    ) implements Routing {
     }
 
     @Builder(toBuilder=true)
@@ -2302,7 +2353,7 @@ public interface AgentModels {
             ReviewRequest reviewRequest,
             @JsonPropertyDescription("Route to merger agent.")
             MergerRequest mergerRequest
-    ) implements SomeOf {
+    ) implements Routing {
     }
 
     @Builder(toBuilder=true)
@@ -2312,7 +2363,7 @@ public interface AgentModels {
             TicketAgentDispatchInterruptRequest interruptRequest,
             @JsonPropertyDescription("Route to ticket collector with aggregated results.")
             TicketCollectorRequest ticketCollectorRequest
-    ) implements SomeOf {
+    ) implements Routing {
     }
 
     /**
@@ -2373,7 +2424,7 @@ public interface AgentModels {
             PlanningCollectorRequest planningCollectorRequest,
             @JsonPropertyDescription("Route to ticket collector.")
             TicketCollectorRequest ticketCollectorRequest
-    ) implements SomeOf {
+    ) implements Routing {
     }
 
     /**
@@ -2451,7 +2502,7 @@ public interface AgentModels {
             PlanningCollectorRequest planningCollectorRequest,
             @JsonPropertyDescription("Route to ticket collector.")
             TicketCollectorRequest ticketCollectorRequest
-    ) implements SomeOf {
+    ) implements Routing {
     }
 
     /**
