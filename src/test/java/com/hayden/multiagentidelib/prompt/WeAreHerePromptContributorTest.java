@@ -1,9 +1,7 @@
 package com.hayden.multiagentidelib.prompt;
 
-import com.hayden.multiagentidelib.agent.AgentModels;
-import com.hayden.multiagentidelib.agent.AgentType;
-import com.hayden.multiagentidelib.agent.BlackboardHistory;
-import com.hayden.multiagentidelib.agent.ContextId;
+import com.hayden.multiagentidelib.agent.*;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -67,8 +65,9 @@ class WeAreHerePromptContributorTest {
         @Test
         @DisplayName("should show orchestrator position in graph")
         void shouldShowOrchestratorPosition() {
-            var request = new AgentModels.OrchestratorRequest("Test goal", "DISCOVERY");
-            var context = buildContext(AgentType.ORCHESTRATOR, request, new BlackboardHistory.History());
+            var request = new AgentModels.OrchestratorRequest(new ContextId("workflow", AgentType.ORCHESTRATOR, 0), "Test goal", "DISCOVERY");
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -81,8 +80,9 @@ class WeAreHerePromptContributorTest {
         @Test
         @DisplayName("should show routing options for orchestrator")
         void shouldShowRoutingOptions() {
-            var request = new AgentModels.OrchestratorRequest("Test goal", "DISCOVERY");
-            var context = buildContext(AgentType.ORCHESTRATOR, request, new BlackboardHistory.History());
+            var request = new AgentModels.OrchestratorRequest(new ContextId("workflow", AgentType.ORCHESTRATOR, 0), "Test goal", "DISCOVERY");
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -95,8 +95,9 @@ class WeAreHerePromptContributorTest {
         @Test
         @DisplayName("should show empty history for first request")
         void shouldShowEmptyHistory() {
-            var request = new AgentModels.OrchestratorRequest("Test goal", "DISCOVERY");
-            var context = buildContext(AgentType.ORCHESTRATOR, request, new BlackboardHistory.History());
+            var request = new AgentModels.OrchestratorRequest(new ContextId("workflow", AgentType.ORCHESTRATOR, 0), "Test goal", "DISCOVERY");
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -112,8 +113,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show discovery orchestrator position")
         void shouldShowDiscoveryOrchestratorPosition() {
             var request = new AgentModels.DiscoveryOrchestratorRequest("Test goal");
-            var history = new BlackboardHistory.History()
-                    .withEntry("coordinateWorkflow", new AgentModels.OrchestratorRequest("Test goal", "DISCOVERY"));
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History()
+                    .withEntry("coordinateWorkflow", new AgentModels.OrchestratorRequest(new ContextId("workflow", AgentType.ORCHESTRATOR, 0), "Test goal", "DISCOVERY")));
             var context = buildContext(AgentType.DISCOVERY_ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
@@ -126,7 +127,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show routing options for discovery orchestrator")
         void shouldShowRoutingOptions() {
             var request = new AgentModels.DiscoveryOrchestratorRequest("Test goal");
-            var context = buildContext(AgentType.DISCOVERY_ORCHESTRATOR, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.DISCOVERY_ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -140,8 +142,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show execution history")
         void shouldShowExecutionHistory() {
             var request = new AgentModels.DiscoveryOrchestratorRequest("Test goal");
-            var history = new BlackboardHistory.History()
-                    .withEntry("coordinateWorkflow", new AgentModels.OrchestratorRequest("Test goal", "DISCOVERY"));
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History()
+                    .withEntry("coordinateWorkflow", new AgentModels.OrchestratorRequest(new ContextId("workflow", AgentType.ORCHESTRATOR, 0), "Test goal", "DISCOVERY")));
             var context = buildContext(AgentType.DISCOVERY_ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
@@ -159,7 +161,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show discovery collector position")
         void shouldShowDiscoveryCollectorPosition() {
             var request = new AgentModels.DiscoveryCollectorRequest("Test goal", "Discovery results here");
-            var context = buildContext(AgentType.DISCOVERY_COLLECTOR, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.DISCOVERY_COLLECTOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -170,7 +173,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show routing options with branching guidance")
         void shouldShowRoutingOptions() {
             var request = new AgentModels.DiscoveryCollectorRequest("Test goal", "Discovery results");
-            var context = buildContext(AgentType.DISCOVERY_COLLECTOR, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.DISCOVERY_COLLECTOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -190,7 +194,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show planning orchestrator position")
         void shouldShowPlanningOrchestratorPosition() {
             var request = new AgentModels.PlanningOrchestratorRequest("Test goal");
-            var context = buildContext(AgentType.PLANNING_ORCHESTRATOR, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.PLANNING_ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -201,7 +206,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show routing options for planning orchestrator")
         void shouldShowRoutingOptions() {
             var request = new AgentModels.PlanningOrchestratorRequest("Test goal");
-            var context = buildContext(AgentType.PLANNING_ORCHESTRATOR, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.PLANNING_ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -219,7 +225,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show planning collector position")
         void shouldShowPlanningCollectorPosition() {
             var request = new AgentModels.PlanningCollectorRequest("Test goal", "Planning results");
-            var context = buildContext(AgentType.PLANNING_COLLECTOR, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.PLANNING_COLLECTOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -230,7 +237,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show routing options with branching guidance")
         void shouldShowRoutingOptions() {
             var request = new AgentModels.PlanningCollectorRequest("Test goal", "Planning results");
-            var context = buildContext(AgentType.PLANNING_COLLECTOR, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.PLANNING_COLLECTOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -250,7 +258,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show ticket orchestrator position")
         void shouldShowTicketOrchestratorPosition() {
             var request = new AgentModels.TicketOrchestratorRequest("Test goal");
-            var context = buildContext(AgentType.TICKET_ORCHESTRATOR, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.TICKET_ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -261,7 +270,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show routing options for ticket orchestrator")
         void shouldShowRoutingOptions() {
             var request = new AgentModels.TicketOrchestratorRequest("Test goal");
-            var context = buildContext(AgentType.TICKET_ORCHESTRATOR, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.TICKET_ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -279,7 +289,12 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show ticket collector position")
         void shouldShowTicketCollectorPosition() {
             var request = new AgentModels.TicketCollectorRequest("Test goal", "Ticket results");
-            var context = buildContext(AgentType.TICKET_COLLECTOR, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(
+                    AgentType.TICKET_COLLECTOR,
+                    request,
+                    history
+            );
             
             String output = contributor.contribute(context);
             
@@ -290,7 +305,12 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show routing options with branching guidance")
         void shouldShowRoutingOptions() {
             var request = new AgentModels.TicketCollectorRequest("Test goal", "Ticket results");
-            var context = buildContext(AgentType.TICKET_COLLECTOR, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(
+                    AgentType.TICKET_COLLECTOR,
+                    request,
+                    history
+            );
             
             String output = contributor.contribute(context);
             
@@ -310,7 +330,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show orchestrator collector position")
         void shouldShowOrchestratorCollectorPosition() {
             var request = new AgentModels.OrchestratorCollectorRequest("Test goal", "COMPLETE");
-            var context = buildContext(AgentType.ORCHESTRATOR_COLLECTOR, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.ORCHESTRATOR_COLLECTOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -321,7 +342,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show final consolidation guidance")
         void shouldShowFinalGuidance() {
             var request = new AgentModels.OrchestratorCollectorRequest("Test goal", "COMPLETE");
-            var context = buildContext(AgentType.ORCHESTRATOR_COLLECTOR, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.ORCHESTRATOR_COLLECTOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -344,7 +366,8 @@ class WeAreHerePromptContributorTest {
                     "Review criteria",
                     null, null, null, null
             );
-            var context = buildContext(AgentType.REVIEW_AGENT, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.REVIEW_AGENT, request, history);
             
             String output = contributor.contribute(context);
             
@@ -366,7 +389,8 @@ class WeAreHerePromptContributorTest {
                     "Conflict files",
                     null, null, null, null
             );
-            var context = buildContext(AgentType.MERGER_AGENT, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.MERGER_AGENT, request, history);
             
             String output = contributor.contribute(context);
             
@@ -383,9 +407,9 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should warn about potential loops")
         void shouldWarnAboutLoops() {
             var request = new AgentModels.DiscoveryOrchestratorRequest("Test goal");
-            var history = new BlackboardHistory.History()
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History()
                     .withEntry("kickOffAgents", new AgentModels.DiscoveryOrchestratorRequest("Test goal"))
-                    .withEntry("kickOffAgents", new AgentModels.DiscoveryOrchestratorRequest("Test goal"));
+                    .withEntry("kickOffAgents", new AgentModels.DiscoveryOrchestratorRequest("Test goal")));
             var context = buildContext(AgentType.DISCOVERY_ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
@@ -399,8 +423,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should not warn for single visits")
         void shouldNotWarnForSingleVisits() {
             var request = new AgentModels.DiscoveryOrchestratorRequest("Test goal");
-            var history = new BlackboardHistory.History()
-                    .withEntry("kickOffAgents", new AgentModels.DiscoveryOrchestratorRequest("Test goal"));
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History()
+                    .withEntry("kickOffAgents", new AgentModels.DiscoveryOrchestratorRequest("Test goal")));
             var context = buildContext(AgentType.DISCOVERY_ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
@@ -417,10 +441,10 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should display complete execution path")
         void shouldDisplayCompletePath() {
             var request = new AgentModels.PlanningOrchestratorRequest("Test goal");
-            var history = new BlackboardHistory.History()
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History()
                     .withEntry("coordinateWorkflow", new AgentModels.OrchestratorRequest("Test goal", "DISCOVERY"))
                     .withEntry("kickOffDiscovery", new AgentModels.DiscoveryOrchestratorRequest("Test goal"))
-                    .withEntry("consolidateDiscovery", new AgentModels.DiscoveryCollectorRequest("Test goal", "results"));
+                    .withEntry("consolidateDiscovery", new AgentModels.DiscoveryCollectorRequest("Test goal", "results")));
             var context = buildContext(AgentType.PLANNING_ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
@@ -434,9 +458,9 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should mark visited nodes in graph")
         void shouldMarkVisitedNodes() {
             var request = new AgentModels.PlanningOrchestratorRequest("Test goal");
-            var history = new BlackboardHistory.History()
-                    .withEntry("coordinateWorkflow", new AgentModels.OrchestratorRequest("Test goal", "DISCOVERY"))
-                    .withEntry("kickOffDiscovery", new AgentModels.DiscoveryOrchestratorRequest("Test goal"));
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History()
+                    .withEntry("coordinateWorkflow", new AgentModels.OrchestratorRequest(new ContextId("workflow", AgentType.ORCHESTRATOR, 0), "Test goal", "DISCOVERY"))
+                    .withEntry("kickOffDiscovery", new AgentModels.DiscoveryOrchestratorRequest("Test goal")));
             var context = buildContext(AgentType.PLANNING_ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
@@ -447,6 +471,15 @@ class WeAreHerePromptContributorTest {
         }
     }
 
+    private static @NonNull BlackboardHistory buildTestBlackboardHistory(BlackboardHistory.History blackboardHistoryItems) {
+        var history = new BlackboardHistory(
+                blackboardHistoryItems,
+                "workflow",
+                WorkflowGraphState.initial("workflow")
+        );
+        return history;
+    }
+
     @Nested
     @DisplayName("Workflow Graph Visualization")
     class WorkflowGraphTests {
@@ -454,8 +487,8 @@ class WeAreHerePromptContributorTest {
         @Test
         @DisplayName("should show complete workflow graph")
         void shouldShowCompleteGraph() {
-            var request = new AgentModels.OrchestratorRequest("Test goal", "DISCOVERY");
-            var context = buildContext(AgentType.ORCHESTRATOR, request, new BlackboardHistory.History());
+            var request = new AgentModels.OrchestratorRequest(new ContextId("workflow", AgentType.ORCHESTRATOR, 0), "Test goal", "DISCOVERY");
+            var context = buildContext(AgentType.ORCHESTRATOR, request, buildTestBlackboardHistory(new BlackboardHistory.History()));
             
             String output = contributor.contribute(context);
             
@@ -477,7 +510,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show collector result types")
         void shouldShowCollectorResults() {
             var request = new AgentModels.OrchestratorRequest("Test goal", "DISCOVERY");
-            var context = buildContext(AgentType.ORCHESTRATOR, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -490,7 +524,8 @@ class WeAreHerePromptContributorTest {
         @DisplayName("should show branching options from collectors")
         void shouldShowBranchingOptions() {
             var request = new AgentModels.OrchestratorRequest("Test goal", "DISCOVERY");
-            var context = buildContext(AgentType.ORCHESTRATOR, request, new BlackboardHistory.History());
+            var history = buildTestBlackboardHistory(new BlackboardHistory.History());
+            var context = buildContext(AgentType.ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
             
@@ -512,7 +547,7 @@ class WeAreHerePromptContributorTest {
     }
 
     // Helper method to build context
-    private PromptContext buildContext(AgentType agentType, AgentModels.AgentRequest request, BlackboardHistory.History history) {
+    private PromptContext buildContext(AgentType agentType, AgentModels.AgentRequest request, BlackboardHistory history) {
         return PromptContext.builder()
                 .agentType(agentType)
                 .currentContextId(new ContextId("test-context", agentType , 0, Instant.now()))

@@ -1545,6 +1545,10 @@ public interface AgentModels {
             this(contextId, goal, phase, null, null, null, null);
         }
 
+        public OrchestratorRequest(String goal, String phase) {
+            this(null, goal, phase, null, null, null, null);
+        }
+
         @Override
         public String prettyPrintInterruptContinuation() {
             StringBuilder builder = new StringBuilder();
