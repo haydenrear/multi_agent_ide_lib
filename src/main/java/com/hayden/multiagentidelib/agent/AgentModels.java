@@ -549,6 +549,22 @@ public interface AgentModels {
     }
 
     @Builder(toBuilder=true)
+    @JsonClassDescription("Interrupt request for user question/answer flow.")
+    record QuestionAnswerInterruptRequest(
+            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+            Events.InterruptType type,
+            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+            String reason,
+            @JsonPropertyDescription("Structured decision choices for the controller.")
+            List<StructuredChoice> choices,
+            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+            List<ConfirmationItem> confirmationItems,
+            @JsonPropertyDescription("Concise context needed to make the decision.")
+            String contextForDecision
+    ) implements InterruptRequest {
+    }
+
+    @Builder(toBuilder=true)
     @JsonClassDescription("Multiple-choice decision with optional write-in.")
     record StructuredChoice(
             @JsonPropertyDescription("Stable identifier for this choice.")
