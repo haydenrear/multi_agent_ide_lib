@@ -71,6 +71,8 @@ public class RequestEnrichment {
             case AgentModels.TicketAgentRequests req -> (T) enrichTicketAgentRequests(req, context);
             case AgentModels.TicketAgentResults req -> (T) enrichTicketAgentResults(req, context);
             case AgentModels.InterruptRequest req -> (T) req; // InterruptRequest doesn't have enrichable fields
+            case AgentModels.ContextManagerRequest req -> (T) req; // ContextManagerRequest handled by caller
+            case AgentModels.ContextManagerRoutingRequest req -> (T) req; // ContextManagerRoutingRequest handled by caller
         };
     }
 

@@ -39,7 +39,8 @@ public class WeAreHerePromptContributor implements PromptContributor {
                 AgentType.TICKET_AGENT_DISPATCH,
                 AgentType.TICKET_COLLECTOR,
                 AgentType.REVIEW_AGENT,
-                AgentType.MERGER_AGENT
+                AgentType.MERGER_AGENT,
+                AgentType.CONTEXT_MANAGER
         );
     }
 
@@ -222,9 +223,15 @@ public class WeAreHerePromptContributor implements PromptContributor {
             return visited;
         }
 
-        for (BlackboardHistory.Entry entry : context.blackboardHistory().entries()) {
-            if (entry.inputType() != null && !visited.contains(entry.inputType())) {
-                visited.add(entry.inputType());
+        for (BlackboardHistory.Entry entry : context.blackboardHistory().copyOfEntries()) {
+            switch (entry) {
+                case BlackboardHistory.DefaultEntry defaultEntry -> {
+                    if (defaultEntry.inputType() != null && !visited.contains(defaultEntry.inputType())) {
+                        visited.add(defaultEntry.inputType());
+                    }
+                }
+                case BlackboardHistory.MessageEntry ignored -> {
+                }
             }
         }
 
@@ -238,24 +245,35 @@ public class WeAreHerePromptContributor implements PromptContributor {
         StringBuilder sb = new StringBuilder();
         sb.append("### Execution History\n\n");
 
-        if (context.blackboardHistory() == null || context.blackboardHistory().entries().isEmpty()) {
+        if (context.blackboardHistory() == null || context.blackboardHistory().copyOfEntries().isEmpty()) {
             sb.append("_No prior actions in this workflow run._\n");
             return sb.toString();
         }
 
-        List<BlackboardHistory.Entry> entries = context.blackboardHistory().entries();
+        List<BlackboardHistory.Entry> entries = context.blackboardHistory().copyOfEntries();
 
         sb.append("| # | Action | Input Type |\n");
         sb.append("|---|--------|------------|\n");
 
         int index = 1;
         for (BlackboardHistory.Entry entry : entries) {
-            String typeName = entry.inputType() != null
-                    ? WorkflowAgentGraphNode.getDisplayName(entry.inputType())
-                    : "unknown";
+            String actionName;
+            String typeName;
+            switch (entry) {
+                case BlackboardHistory.DefaultEntry defaultEntry -> {
+                    actionName = defaultEntry.actionName();
+                    typeName = defaultEntry.inputType() != null
+                            ? WorkflowAgentGraphNode.getDisplayName(defaultEntry.inputType())
+                            : "unknown";
+                }
+                case BlackboardHistory.MessageEntry messageEntry -> {
+                    actionName = messageEntry.actionName();
+                    typeName = "MessageEvent";
+                }
+            }
             sb.append("| ").append(index++).append(" | ")
-              .append(entry.actionName()).append(" | ")
-              .append(typeName).append(" |\n");
+                    .append(actionName).append(" | ")
+                    .append(typeName).append(" |\n");
         }
 
         // Add loop detection warning
@@ -324,10 +342,11 @@ public class WeAreHerePromptContributor implements PromptContributor {
                 - `interruptRequest` - Pause or stop execution per interrupt request
                 - `collectorRequest` - Route to Orchestrator Collector (final consolidation)
                 - `orchestratorRequest` - Route to Discovery Orchestrator
+                - `contextManagerRequest` - Route to Context Manager for context reconstruction
 
                 **Happy path:** For a new workflow, set `orchestratorRequest` to start discovery.
                 Only set `collectorRequest` when ALL workflow phases are complete.
-                """ + interruptGuidance();
+                """  + interruptGuidance() + contextManagerGuidance();
         }
 
         if (requestType.equals(AgentModels.DiscoveryOrchestratorRequest.class)) {
@@ -338,10 +357,11 @@ public class WeAreHerePromptContributor implements PromptContributor {
                 - `interruptRequest` - Pause or stop execution per interrupt request
                 - `agentRequests` - Delegate to multiple discovery agents (contains list of DiscoveryAgentRequest)
                 - `collectorRequest` - Route to Discovery Collector to consolidate results
+                - `contextManagerRequest` - Route to Context Manager for context reconstruction
 
                 **Happy path:** Set `agentRequests` to dispatch discovery work, then later set
                 `collectorRequest` when agents have gathered sufficient information.
-                """ + interruptGuidance();
+                """  + interruptGuidance() + contextManagerGuidance();
         }
 
         if (requestType.equals(AgentModels.DiscoveryCollectorRequest.class)) {
@@ -355,6 +375,7 @@ public class WeAreHerePromptContributor implements PromptContributor {
                    - `planningRequest` - Route to Planning Orchestrator
                    - `orchestratorRequest` - Route to main Orchestrator
                    - `reviewRequest` / `mergerRequest` - Route to review/merge
+                   - `contextManagerRequest` - Route to Context Manager for context reconstruction
 
                 2. **Branching routing** - Set `collectorResult` with a `DiscoveryCollectorResult`:
                    - The `collectorResult` contains a `CollectorDecision` with `decisionType`
@@ -363,7 +384,7 @@ public class WeAreHerePromptContributor implements PromptContributor {
                    - ROUTE_BACK → handler sets `discoveryRequest`
 
                 **Most common:** Use option 2 (set `collectorResult`) for standard flow control.
-                """ + interruptGuidance();
+                """  + interruptGuidance() + contextManagerGuidance();
         }
 
         if (requestType.equals(AgentModels.PlanningOrchestratorRequest.class)) {
@@ -374,10 +395,11 @@ public class WeAreHerePromptContributor implements PromptContributor {
                 - `interruptRequest` - Pause or stop execution per interrupt request
                 - `agentRequests` - Delegate to multiple planning agents (contains list of PlanningAgentRequest)
                 - `collectorRequest` - Route to Planning Collector to consolidate results
+                - `contextManagerRequest` - Route to Context Manager for context reconstruction
 
                 **Happy path:** Set `agentRequests` to dispatch planning work, then later set
                 `collectorRequest` when planning is complete.
-                """ + interruptGuidance();
+                """  + interruptGuidance() + contextManagerGuidance();
         }
 
         if (requestType.equals(AgentModels.PlanningCollectorRequest.class)) {
@@ -392,6 +414,7 @@ public class WeAreHerePromptContributor implements PromptContributor {
                    - `discoveryOrchestratorRequest` - Route to Discovery Orchestrator
                    - `orchestratorCollectorRequest` - Route to Orchestrator Collector
                    - `reviewRequest` / `mergerRequest` - Route to review/merge
+                   - `contextManagerRequest` - Route to Context Manager for context reconstruction
 
                 2. **Branching routing** - Set `collectorResult` with a `PlanningCollectorResult`:
                    - The `collectorResult` contains a `CollectorDecision` with `decisionType`
@@ -400,7 +423,7 @@ public class WeAreHerePromptContributor implements PromptContributor {
                    - ROUTE_BACK → handler sets `planningRequest`
 
                 **Most common:** Use option 2 (set `collectorResult`) for standard flow control.
-                """ + interruptGuidance();
+                """  + interruptGuidance() + contextManagerGuidance();
         }
 
         if (requestType.equals(AgentModels.TicketOrchestratorRequest.class)) {
@@ -411,10 +434,11 @@ public class WeAreHerePromptContributor implements PromptContributor {
                 - `interruptRequest` - Pause or stop execution per interrupt request
                 - `agentRequests` - Delegate to multiple ticket agents (contains list of TicketAgentRequest)
                 - `collectorRequest` - Route to Ticket Collector to consolidate results
+                - `contextManagerRequest` - Route to Context Manager for context reconstruction
 
                 **Happy path:** Set `agentRequests` to dispatch ticket execution work, then later set
                 `collectorRequest` when implementation is complete.
-                """ + interruptGuidance();
+                """  + interruptGuidance() + contextManagerGuidance();
         }
 
         if (requestType.equals(AgentModels.TicketCollectorRequest.class)) {
@@ -427,6 +451,7 @@ public class WeAreHerePromptContributor implements PromptContributor {
                    - `ticketRequest` - Route back to Ticket Orchestrator
                    - `orchestratorCollectorRequest` - Route to Orchestrator Collector
                    - `reviewRequest` / `mergerRequest` - Route to review/merge
+                   - `contextManagerRequest` - Route to Context Manager for context reconstruction
 
                 2. **Branching routing** - Set `collectorResult` with a `TicketCollectorResult`:
                    - The `collectorResult` contains a `CollectorDecision` with `decisionType`
@@ -435,7 +460,7 @@ public class WeAreHerePromptContributor implements PromptContributor {
                    - ROUTE_BACK → handler sets `ticketRequest`
 
                 **Most common:** Use option 2 (set `collectorResult`) for standard flow control.
-                """ + interruptGuidance();
+                """  + interruptGuidance() + contextManagerGuidance();
         }
 
         if (requestType.equals(AgentModels.OrchestratorCollectorRequest.class)) {
@@ -450,6 +475,7 @@ public class WeAreHerePromptContributor implements PromptContributor {
                    - `planningRequest` - Route to Planning Orchestrator
                    - `ticketRequest` - Route to Ticket Orchestrator
                    - `reviewRequest` / `mergerRequest` - Route to review/merge
+                   - `contextManagerRequest` - Route to Context Manager for context reconstruction
 
                 2. **Branching routing** - Set `collectorResult` with an `OrchestratorCollectorResult`:
                    - The `collectorResult` contains a `CollectorDecision` with `decisionType`
@@ -458,7 +484,7 @@ public class WeAreHerePromptContributor implements PromptContributor {
                    - ROUTE_BACK → restart at specific phase
 
                 **Most common:** Use option 2 with ADVANCE_PHASE for workflow completion.
-                """ + interruptGuidance();
+                """  + interruptGuidance() + contextManagerGuidance();
         }
 
         // Discovery Agent
@@ -470,9 +496,10 @@ public class WeAreHerePromptContributor implements PromptContributor {
                 - `interruptRequest` - Pause or stop execution per interrupt request
                 - `agentResult` - Return discovery findings (contains DiscoveryReport)
                 - `planningOrchestratorRequest` - Bypass to Planning Orchestrator (rare)
+                - `contextManagerRequest` - Route to Context Manager for context reconstruction
 
                 **Happy path:** Set `agentResult` with your discovery findings.
-                """ + interruptGuidance();
+                """  + interruptGuidance() + contextManagerGuidance();
         }
 
         // Planning Agent
@@ -483,9 +510,10 @@ public class WeAreHerePromptContributor implements PromptContributor {
                 **Routing options:**
                 - `interruptRequest` - Pause or stop execution per interrupt request
                 - `agentResult` - Return planning results (contains tickets)
+                - `contextManagerRequest` - Route to Context Manager for context reconstruction
 
                 **Happy path:** Set `agentResult` with your planning tickets.
-                """ + interruptGuidance();
+                """  + interruptGuidance() + contextManagerGuidance();
         }
 
         // Ticket Agent
@@ -496,9 +524,10 @@ public class WeAreHerePromptContributor implements PromptContributor {
                 **Routing options:**
                 - `interruptRequest` - Pause or stop execution per interrupt request
                 - `agentResult` - Return ticket execution results (files modified, tests, commits)
+                - `contextManagerRequest` - Route to Context Manager for context reconstruction
 
                 **Happy path:** Set `agentResult` with your implementation results.
-                """ + interruptGuidance();
+                """  + interruptGuidance() + contextManagerGuidance();
         }
 
         if (requestType.equals(AgentModels.DiscoveryAgentResults.class)) {
@@ -508,9 +537,10 @@ public class WeAreHerePromptContributor implements PromptContributor {
                 **Routing options:**
                 - `interruptRequest` - Pause or stop execution per interrupt request
                 - `collectorRequest` - Route to Discovery Collector
+                - `contextManagerRequest` - Route to Context Manager for context reconstruction
 
                 **Happy path:** Set `collectorRequest` to consolidate discovery results.
-                """ + interruptGuidance();
+                """  + interruptGuidance() + contextManagerGuidance();
         }
 
         if (requestType.equals(AgentModels.PlanningAgentResults.class)) {
@@ -520,9 +550,10 @@ public class WeAreHerePromptContributor implements PromptContributor {
                 **Routing options:**
                 - `interruptRequest` - Pause or stop execution per interrupt request
                 - `planningCollectorRequest` - Route to Planning Collector
+                - `contextManagerRequest` - Route to Context Manager for context reconstruction
 
                 **Happy path:** Set `planningCollectorRequest` to consolidate planning results.
-                """ + interruptGuidance();
+                """  + interruptGuidance() + contextManagerGuidance();
         }
 
         if (requestType.equals(AgentModels.TicketAgentResults.class)) {
@@ -532,9 +563,77 @@ public class WeAreHerePromptContributor implements PromptContributor {
                 **Routing options:**
                 - `interruptRequest` - Pause or stop execution per interrupt request
                 - `ticketCollectorRequest` - Route to Ticket Collector
+                - `contextManagerRequest` - Route to Context Manager for context reconstruction
 
                 **Happy path:** Set `ticketCollectorRequest` to consolidate ticket results.
-                """ + interruptGuidance();
+                """  + interruptGuidance() + contextManagerGuidance();
+        }
+
+        if (requestType.equals(AgentModels.ContextManagerRoutingRequest.class)) {
+            return """
+                **Guidance:** You must return a `ContextManagerRequest` assembled by the routing action.
+
+                **Routing options:**
+                - `reason` - Explain why context reconstruction is needed
+                - `type` - Choose the reconstruction type (INTROSPECT_AGENT_CONTEXT or PROCEED)
+
+                **Happy path:** Provide a concise reason and pick the most appropriate type.
+                """;
+        }
+
+        if (requestType.equals(AgentModels.ContextManagerRequest.class)) {
+            return """
+                **Guidance:** You must return a `ContextManagerResultRouting` with exactly ONE field set.
+
+                **Routing options:**
+                - `interruptRequest` - Pause or stop execution per interrupt request
+                - `orchestratorRequest` - Route to Orchestrator
+                - `orchestratorCollectorRequest` - Route to Orchestrator Collector
+                - `discoveryOrchestratorRequest` - Route to Discovery Orchestrator
+                - `discoveryCollectorRequest` - Route to Discovery Collector
+                - `planningOrchestratorRequest` - Route to Planning Orchestrator
+                - `planningCollectorRequest` - Route to Planning Collector
+                - `ticketOrchestratorRequest` - Route to Ticket Orchestrator
+                - `ticketCollectorRequest` - Route to Ticket Collector
+                - `reviewRequest` - Route to Review Agent
+                - `mergerRequest` - Route to Merger Agent
+                - `planningAgentRequest` - Route to Planning Agent
+                - `planningAgentRequests` - Route to Planning Agent dispatch
+                - `planningAgentResults` - Route to Planning Agent results
+                - `ticketAgentRequest` - Route to Ticket Agent
+                - `ticketAgentRequests` - Route to Ticket Agent dispatch
+                - `ticketAgentResults` - Route to Ticket Agent results
+                - `discoveryAgentRequest` - Route to Discovery Agent
+                - `discoveryAgentRequests` - Route to Discovery Agent dispatch
+                - `discoveryAgentResults` - Route to Discovery Agent results
+                - `contextOrchestratorRequest` - Route to Context Orchestrator
+
+                **Available return routes in this request (may be null):**
+                - `returnToOrchestrator`
+                - `returnToOrchestratorCollector`
+                - `returnToDiscoveryOrchestrator`
+                - `returnToDiscoveryCollector`
+                - `returnToPlanningOrchestrator`
+                - `returnToPlanningCollector`
+                - `returnToTicketOrchestrator`
+                - `returnToTicketCollector`
+                - `returnToReview`
+                - `returnToMerger`
+                - `returnToPlanningAgent`
+                - `returnToPlanningAgentRequests`
+                - `returnToPlanningAgentResults`
+                - `returnToTicketAgent`
+                - `returnToTicketAgentRequests`
+                - `returnToTicketAgentResults`
+                - `returnToDiscoveryAgent`
+                - `returnToDiscoveryAgentRequests`
+                - `returnToDiscoveryAgentResults`
+                - `returnToContextOrchestrator`
+
+                **Constraint:** Exactly one `returnTo*` field should be non-null in any ContextManagerRequest.
+
+                **Happy path:** Route to the agent that can most directly act on the reconstructed context.
+                """  + interruptGuidance();
         }
 
         return "";
@@ -545,6 +644,14 @@ public class WeAreHerePromptContributor implements PromptContributor {
 
                 **Interrupt guidance:** If uncertain, emit an `interruptRequest`. You may emit interrupts multiple times if more context is needed.
                 Include `reason`, `contextForDecision`, `choices`, `confirmationItems`, and the agent-specific interrupt context fields.
+                """;
+    }
+
+    private String contextManagerGuidance() {
+        return """
+
+                **Context guidance:** To request context reconstruction, set `contextManagerRequest`
+                with a `ContextManagerRoutingRequest` (provide `reason` and `type`).
                 """;
     }
 }

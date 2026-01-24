@@ -38,7 +38,7 @@ public class PromptContextFactory {
     public PromptContext build(
             AgentType agentType,
             Object input,
-            BlackboardHistory.History blackboardHistory
+            BlackboardHistory blackboardHistory
     ) {
         ContextId contextId = null;
         List<UpstreamContext> upstreamContexts = new ArrayList<>();
@@ -151,7 +151,7 @@ public class PromptContextFactory {
             ContextId contextId,
             List<UpstreamContext> upstreamContexts,
             PreviousContext previousContext,
-            BlackboardHistory.History blackboardHistory
+            BlackboardHistory blackboardHistory
     ) {
         return new PromptContext(
                 agentType,
@@ -173,7 +173,7 @@ public class PromptContextFactory {
             ContextId contextId,
             UpstreamContext upstreamContext,
             PreviousContext previousContext,
-            BlackboardHistory.History blackboardHistory
+            BlackboardHistory blackboardHistory
     ) {
         List<UpstreamContext> contexts = upstreamContext != null 
                 ? List.of(upstreamContext) 
@@ -190,6 +190,8 @@ public class PromptContextFactory {
     }
 
     private ContextId resolve(ContextId contextId) {
+        if (contextId == null)
+            return null;
         return contextIdService.generate(contextId.workflowRunId(), contextId.agentType());
     }
 

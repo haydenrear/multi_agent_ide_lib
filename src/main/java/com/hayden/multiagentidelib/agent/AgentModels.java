@@ -10,9 +10,12 @@ import com.hayden.multiagentidelib.template.MemoryReference;
 import com.hayden.multiagentidelib.template.PlanningTicket;
 import com.hayden.utilitymodule.acp.events.Events;
 import lombok.Builder;
+import lombok.extern.slf4j.Slf4j;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public interface AgentModels {
 
@@ -51,6 +54,8 @@ public interface AgentModels {
 //            merger/review to reroute to requesting agent,
 //            or when in invalid status or degenerate loop
             ContextOrchestratorRequest,
+            ContextManagerRequest,
+            ContextManagerRoutingRequest,
 //          There exist various interrupt request types for each
 //            of above agents associated with the requests, can reroute,
 //            then get rerouted back
@@ -470,6 +475,28 @@ public interface AgentModels {
         public MergerInterruptRequest(Events.InterruptType type, String reason) {
             this(type, reason, List.of(), List.of(), "", List.of(), List.of(), "");
         }
+    }
+
+    @Builder(toBuilder=true)
+    @JsonClassDescription("Interrupt request for context manager routing decisions.")
+    record ContextManagerInterruptRequest(
+            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+            Events.InterruptType type,
+            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+            String reason,
+            @JsonPropertyDescription("Structured decision choices for the controller.")
+            List<StructuredChoice> choices,
+            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+            List<ConfirmationItem> confirmationItems,
+            @JsonPropertyDescription("Concise context needed to make the decision.")
+            String contextForDecision,
+            @JsonPropertyDescription("Summary of context reconstruction findings.")
+            String contextFindings,
+            @JsonPropertyDescription("Relevance assessments for sources.")
+            List<String> relevanceAssessments,
+            @JsonPropertyDescription("Source references used during reconstruction.")
+            List<String> sourceReferences
+    ) implements InterruptRequest {
     }
 
     record ContextOrchestratorInterruptRequest(
@@ -1091,28 +1118,6 @@ public interface AgentModels {
     }
 
     @Builder(toBuilder=true)
-    record ContextCollectorResult(
-            String consolidatedOutput,
-            CollectorDecision collectorDecision
-    ) implements AgentResult {
-        @Override
-        public String prettyPrint() {
-            StringBuilder builder = new StringBuilder();
-            if (consolidatedOutput != null && !consolidatedOutput.isBlank()) {
-                builder.append(consolidatedOutput.trim()).append("\n");
-            }
-            if (collectorDecision != null) {
-                builder.append("Decision: ").append(collectorDecision.decisionType());
-                if (collectorDecision.rationale() != null && !collectorDecision.rationale().isBlank()) {
-                    builder.append(" - ").append(collectorDecision.rationale().trim());
-                }
-                builder.append("\n");
-            }
-            return builder.toString().trim();
-        }
-    }
-
-    @Builder(toBuilder=true)
     @JsonClassDescription("Final consolidated workflow result and routing decision.")
     record OrchestratorCollectorResult(
             @JsonPropertyDescription("Schema version for this result payload.")
@@ -1540,10 +1545,6 @@ public interface AgentModels {
             this(contextId, goal, phase, null, null, null, null);
         }
 
-        public OrchestratorRequest(String goal, String phase) {
-            this(null, goal, phase, null, null, null, null);
-        }
-
         @Override
         public String prettyPrintInterruptContinuation() {
             StringBuilder builder = new StringBuilder();
@@ -1619,7 +1620,8 @@ public interface AgentModels {
             TicketCollectorRouting,
             TicketAgentDispatchRouting,
             ReviewRouting,
-            MergerRouting {}
+            MergerRouting,
+            ContextManagerResultRouting {}
 
     /**
      * Routing type for orchestrator - routes to interrupt, collector, or discovery orchestrator.
@@ -1633,10 +1635,12 @@ public interface AgentModels {
             @JsonPropertyDescription("Route to orchestrator collector for finalization.")
             OrchestratorCollectorRequest collectorRequest,
             @JsonPropertyDescription("Route to discovery orchestrator to start discovery.")
-            DiscoveryOrchestratorRequest orchestratorRequest
+            DiscoveryOrchestratorRequest orchestratorRequest,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
         public OrchestratorRouting(OrchestratorInterruptRequest interruptRequest, OrchestratorCollectorRequest collectorRequest) {
-            this(interruptRequest, collectorRequest, null);
+            this(interruptRequest, collectorRequest, null, null);
         }
     }
 
@@ -1658,10 +1662,12 @@ public interface AgentModels {
             @JsonPropertyDescription("Route to review agent.")
             ReviewRequest reviewRequest,
             @JsonPropertyDescription("Route to merger agent.")
-            MergerRequest mergerRequest
+            MergerRequest mergerRequest,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
         public OrchestratorCollectorRouting(OrchestratorCollectorResult collectorResult) {
-            this(null, collectorResult, null, null, null, null, null, null);
+            this(null, collectorResult, null, null, null, null, null, null, null);
         }
     }
 
@@ -1860,7 +1866,9 @@ public interface AgentModels {
             @JsonPropertyDescription("Delegation payload for discovery agents.")
             DiscoveryAgentRequests agentRequests,
             @JsonPropertyDescription("Route to discovery collector.")
-            DiscoveryCollectorRequest collectorRequest
+            DiscoveryCollectorRequest collectorRequest,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
     }
 
@@ -1872,10 +1880,12 @@ public interface AgentModels {
             @JsonPropertyDescription("Discovery agent result payload.")
             DiscoveryAgentResult agentResult,
             @JsonPropertyDescription("Optional route to planning orchestrator.")
-            AgentModels.PlanningOrchestratorRequest planningOrchestratorRequest
+            AgentModels.PlanningOrchestratorRequest planningOrchestratorRequest,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
         public DiscoveryAgentRouting(DiscoveryAgentInterruptRequest interruptRequest, DiscoveryAgentResult agentResult) {
-            this(interruptRequest, agentResult, null);
+            this(interruptRequest, agentResult, null, null);
         }
     }
 
@@ -1899,7 +1909,9 @@ public interface AgentModels {
             @JsonPropertyDescription("Route to review agent.")
             ReviewRequest reviewRequest,
             @JsonPropertyDescription("Route to merger agent.")
-            MergerRequest mergerRequest
+            MergerRequest mergerRequest,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
     }
 
@@ -1909,7 +1921,9 @@ public interface AgentModels {
             @JsonPropertyDescription("Interrupt request for dispatch decisions.")
             DiscoveryAgentDispatchInterruptRequest interruptRequest,
             @JsonPropertyDescription("Route to discovery collector with aggregated results.")
-            DiscoveryCollectorRequest collectorRequest
+            DiscoveryCollectorRequest collectorRequest,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing { }
 
     /**
@@ -2090,7 +2104,9 @@ public interface AgentModels {
             @JsonPropertyDescription("Delegation payload for planning agents.")
             PlanningAgentRequests agentRequests,
             @JsonPropertyDescription("Route to planning collector.")
-            PlanningCollectorRequest collectorRequest
+            PlanningCollectorRequest collectorRequest,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
     }
 
@@ -2100,7 +2116,9 @@ public interface AgentModels {
             @JsonPropertyDescription("Interrupt request for planning agent decisions.")
             PlanningAgentInterruptRequest interruptRequest,
             @JsonPropertyDescription("Planning agent result payload.")
-            PlanningAgentResult agentResult
+            PlanningAgentResult agentResult,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
     }
 
@@ -2122,10 +2140,12 @@ public interface AgentModels {
             @JsonPropertyDescription("Route to ticket orchestrator.")
             TicketOrchestratorRequest ticketOrchestratorRequest,
             @JsonPropertyDescription("Route to orchestrator collector.")
-            OrchestratorCollectorRequest orchestratorCollectorRequest
+            OrchestratorCollectorRequest orchestratorCollectorRequest,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
         public PlanningCollectorRouting(PlanningCollectorInterruptRequest interruptRequest, PlanningCollectorResult collectorResult, PlanningOrchestratorRequest planningRequest, DiscoveryOrchestratorRequest discoveryOrchestratorRequest, ReviewRequest reviewRequest, MergerRequest mergerRequest) {
-            this(interruptRequest, collectorResult, planningRequest, discoveryOrchestratorRequest, reviewRequest, mergerRequest, null, null);
+            this(interruptRequest, collectorResult, planningRequest, discoveryOrchestratorRequest, reviewRequest, mergerRequest, null, null, null);
         }
     }
 
@@ -2135,7 +2155,9 @@ public interface AgentModels {
             @JsonPropertyDescription("Interrupt request for dispatch decisions.")
             PlanningAgentDispatchInterruptRequest interruptRequest,
             @JsonPropertyDescription("Route to planning collector with aggregated results.")
-            PlanningCollectorRequest planningCollectorRequest
+            PlanningCollectorRequest planningCollectorRequest,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
     }
 
@@ -2324,7 +2346,9 @@ public interface AgentModels {
             @JsonPropertyDescription("Delegation payload for ticket agents.")
             TicketAgentRequests agentRequests,
             @JsonPropertyDescription("Route to ticket collector.")
-            TicketCollectorRequest collectorRequest
+            TicketCollectorRequest collectorRequest,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
     }
 
@@ -2334,7 +2358,9 @@ public interface AgentModels {
             @JsonPropertyDescription("Interrupt request for ticket agent decisions.")
             TicketAgentInterruptRequest interruptRequest,
             @JsonPropertyDescription("Ticket agent result payload.")
-            TicketAgentResult agentResult
+            TicketAgentResult agentResult,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
     }
 
@@ -2352,7 +2378,9 @@ public interface AgentModels {
             @JsonPropertyDescription("Route to review agent.")
             ReviewRequest reviewRequest,
             @JsonPropertyDescription("Route to merger agent.")
-            MergerRequest mergerRequest
+            MergerRequest mergerRequest,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
     }
 
@@ -2362,7 +2390,9 @@ public interface AgentModels {
             @JsonPropertyDescription("Interrupt request for dispatch decisions.")
             TicketAgentDispatchInterruptRequest interruptRequest,
             @JsonPropertyDescription("Route to ticket collector with aggregated results.")
-            TicketCollectorRequest ticketCollectorRequest
+            TicketCollectorRequest ticketCollectorRequest,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
     }
 
@@ -2423,7 +2453,9 @@ public interface AgentModels {
             @JsonPropertyDescription("Route to planning collector.")
             PlanningCollectorRequest planningCollectorRequest,
             @JsonPropertyDescription("Route to ticket collector.")
-            TicketCollectorRequest ticketCollectorRequest
+            TicketCollectorRequest ticketCollectorRequest,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
     }
 
@@ -2501,7 +2533,9 @@ public interface AgentModels {
             @JsonPropertyDescription("Route to planning collector.")
             PlanningCollectorRequest planningCollectorRequest,
             @JsonPropertyDescription("Route to ticket collector.")
-            TicketCollectorRequest ticketCollectorRequest
+            TicketCollectorRequest ticketCollectorRequest,
+            @JsonPropertyDescription("Route to context manager for context reconstruction.")
+            ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
     }
 
@@ -2536,6 +2570,218 @@ public interface AgentModels {
             }
             return builder.isEmpty() ? "Goal: (none)" : builder.toString();
         }
+    }
+
+    enum ContextManagerRequestType {
+        INTROSPECT_AGENT_CONTEXT,
+        PROCEED
+    }
+
+    @Builder(toBuilder=true)
+    @JsonClassDescription("Lightweight request to route to the context manager.")
+    record ContextManagerRoutingRequest(
+            @JsonPropertyDescription("Reason for requesting context reconstruction.")
+            String reason,
+            @JsonPropertyDescription("Type of context reconstruction to request.")
+            ContextManagerRequestType type
+    ) implements AgentRequest {
+        @Override
+        public String prettyPrintInterruptContinuation() {
+            if (reason == null || reason.isBlank()) {
+                return "Context Manager Routing: (no reason)";
+            }
+            return "Context Manager Routing: " + reason.trim();
+        }
+    }
+
+    @Builder(toBuilder=true)
+    @JsonClassDescription("Request for Context Manager to reconstruct context.")
+    record ContextManagerRequest(
+            @JsonPropertyDescription("Unique context id for this request.")
+            ContextId contextId,
+            @JsonPropertyDescription("Type of context reconstruction.")
+            ContextManagerRequestType type,
+            @JsonPropertyDescription("Reason for context reconstruction.")
+            String reason,
+            @JsonPropertyDescription("Goal of the reconstruction.")
+            String goal,
+            @JsonPropertyDescription("Additional context to guide reconstruction.")
+            String additionalContext,
+            @JsonPropertyDescription("Route back to orchestrator.")
+            OrchestratorRequest returnToOrchestrator,
+            @JsonPropertyDescription("Route back to orchestrator collector.")
+            OrchestratorCollectorRequest returnToOrchestratorCollector,
+            @JsonPropertyDescription("Route back to discovery orchestrator.")
+            DiscoveryOrchestratorRequest returnToDiscoveryOrchestrator,
+            @JsonPropertyDescription("Route back to discovery collector.")
+            DiscoveryCollectorRequest returnToDiscoveryCollector,
+            @JsonPropertyDescription("Route back to planning orchestrator.")
+            PlanningOrchestratorRequest returnToPlanningOrchestrator,
+            @JsonPropertyDescription("Route back to planning collector.")
+            PlanningCollectorRequest returnToPlanningCollector,
+            @JsonPropertyDescription("Route back to ticket orchestrator.")
+            TicketOrchestratorRequest returnToTicketOrchestrator,
+            @JsonPropertyDescription("Route back to ticket collector.")
+            TicketCollectorRequest returnToTicketCollector,
+            @JsonPropertyDescription("Route back to review agent.")
+            ReviewRequest returnToReview,
+            @JsonPropertyDescription("Route back to merger agent.")
+            MergerRequest returnToMerger,
+            @JsonPropertyDescription("Route back to planning agent.")
+            PlanningAgentRequest returnToPlanningAgent,
+            @JsonPropertyDescription("Route back to planning agent requests.")
+            PlanningAgentRequests returnToPlanningAgentRequests,
+            @JsonPropertyDescription("Route back to planning agent results.")
+            PlanningAgentResults returnToPlanningAgentResults,
+            @JsonPropertyDescription("Route back to ticket agent.")
+            TicketAgentRequest returnToTicketAgent,
+            @JsonPropertyDescription("Route back to ticket agent requests.")
+            TicketAgentRequests returnToTicketAgentRequests,
+            @JsonPropertyDescription("Route back to ticket agent results.")
+            TicketAgentResults returnToTicketAgentResults,
+            @JsonPropertyDescription("Route back to discovery agent.")
+            DiscoveryAgentRequest returnToDiscoveryAgent,
+            @JsonPropertyDescription("Route back to discovery agent requests.")
+            DiscoveryAgentRequests returnToDiscoveryAgentRequests,
+            @JsonPropertyDescription("Route back to discovery agent results.")
+            DiscoveryAgentResults returnToDiscoveryAgentResults,
+            @JsonPropertyDescription("Route back to context orchestrator.")
+            ContextOrchestratorRequest returnToContextOrchestrator,
+            @JsonPropertyDescription("Previous context for reruns.")
+            PreviousContext previousContext
+    ) implements AgentRequest {
+        @Override
+        public String prettyPrintInterruptContinuation() {
+            StringBuilder builder = new StringBuilder();
+            if (type != null) {
+                builder.append("Type: ").append(type);
+            }
+            if (reason != null && !reason.isBlank()) {
+                if (!builder.isEmpty()) {
+                    builder.append("\n");
+                }
+                builder.append("Reason: ").append(reason.trim());
+            }
+            if (goal != null && !goal.isBlank()) {
+                if (!builder.isEmpty()) {
+                    builder.append("\n");
+                }
+                builder.append("Goal: ").append(goal.trim());
+            }
+            if (additionalContext != null && !additionalContext.isBlank()) {
+                if (!builder.isEmpty()) {
+                    builder.append("\n");
+                }
+                builder.append("Additional Context:\n").append(additionalContext.trim());
+            }
+            return builder.isEmpty() ? "Context Manager Request: (none)" : builder.toString();
+        }
+
+        public ContextManagerRequest addRequest(AgentRequest lastOfType) {
+            if (lastOfType == null) {
+                return this;
+            }
+
+            ContextManagerRequestBuilder builder = this.toBuilder();
+            switch (lastOfType) {
+                case ContextManagerRequest contextManagerRequest -> {
+                }
+                case ContextOrchestratorRequest contextOrchestratorRequest ->
+                        builder = builder.returnToContextOrchestrator(contextOrchestratorRequest);
+                case DiscoveryAgentRequest discoveryAgentRequest ->
+                        builder = builder.returnToDiscoveryAgent(discoveryAgentRequest);
+                case DiscoveryAgentRequests discoveryAgentRequests ->
+                        builder = builder.returnToDiscoveryAgentRequests(discoveryAgentRequests);
+                case DiscoveryAgentResults discoveryAgentResults ->
+                        builder = builder.returnToDiscoveryAgentResults(discoveryAgentResults);
+                case DiscoveryCollectorRequest discoveryCollectorRequest ->
+                        builder = builder.returnToDiscoveryCollector(discoveryCollectorRequest);
+                case DiscoveryOrchestratorRequest discoveryOrchestratorRequest ->
+                        builder = builder.returnToDiscoveryOrchestrator(discoveryOrchestratorRequest);
+                case InterruptRequest interruptRequest -> {
+                }
+                case MergerRequest mergerRequest ->
+                        builder = builder.returnToMerger(mergerRequest);
+                case OrchestratorCollectorRequest orchestratorCollectorRequest ->
+                        builder = builder.returnToOrchestratorCollector(orchestratorCollectorRequest);
+                case OrchestratorRequest orchestratorRequest ->
+                        builder = builder.returnToOrchestrator(orchestratorRequest);
+                case PlanningAgentRequest planningAgentRequest ->
+                        builder = builder.returnToPlanningAgent(planningAgentRequest);
+                case PlanningAgentRequests planningAgentRequests ->
+                        builder = builder.returnToPlanningAgentRequests(planningAgentRequests);
+                case PlanningAgentResults planningAgentResults ->
+                        builder = builder.returnToPlanningAgentResults(planningAgentResults);
+                case PlanningCollectorRequest planningCollectorRequest ->
+                        builder = builder.returnToPlanningCollector(planningCollectorRequest);
+                case PlanningOrchestratorRequest planningOrchestratorRequest ->
+                        builder = builder.returnToPlanningOrchestrator(planningOrchestratorRequest);
+                case ReviewRequest reviewRequest ->
+                        builder = builder.returnToReview(reviewRequest);
+                case TicketAgentRequest ticketAgentRequest ->
+                        builder = builder.returnToTicketAgent(ticketAgentRequest);
+                case TicketAgentRequests ticketAgentRequests ->
+                        builder = builder.returnToTicketAgentRequests(ticketAgentRequests);
+                case TicketAgentResults ticketAgentResults ->
+                        builder = builder.returnToTicketAgentResults(ticketAgentResults);
+                case TicketCollectorRequest ticketCollectorRequest ->
+                        builder = builder.returnToTicketCollector(ticketCollectorRequest);
+                case TicketOrchestratorRequest ticketOrchestratorRequest ->
+                        builder = builder.returnToTicketOrchestrator(ticketOrchestratorRequest);
+                case ContextManagerRoutingRequest contextManagerRoutingRequest -> {
+                }
+            }
+
+            return builder.build();
+        }
+    }
+
+    @Builder(toBuilder=true)
+    @JsonClassDescription("Routing result for the context manager agent.")
+    record ContextManagerResultRouting(
+            @JsonPropertyDescription("Interrupt request for context manager decisions.")
+            ContextManagerInterruptRequest interruptRequest,
+            @JsonPropertyDescription("Route to orchestrator.")
+            OrchestratorRequest orchestratorRequest,
+            @JsonPropertyDescription("Route to orchestrator collector.")
+            OrchestratorCollectorRequest orchestratorCollectorRequest,
+            @JsonPropertyDescription("Route to discovery orchestrator.")
+            DiscoveryOrchestratorRequest discoveryOrchestratorRequest,
+            @JsonPropertyDescription("Route to discovery collector.")
+            DiscoveryCollectorRequest discoveryCollectorRequest,
+            @JsonPropertyDescription("Route to planning orchestrator.")
+            PlanningOrchestratorRequest planningOrchestratorRequest,
+            @JsonPropertyDescription("Route to planning collector.")
+            PlanningCollectorRequest planningCollectorRequest,
+            @JsonPropertyDescription("Route to ticket orchestrator.")
+            TicketOrchestratorRequest ticketOrchestratorRequest,
+            @JsonPropertyDescription("Route to ticket collector.")
+            TicketCollectorRequest ticketCollectorRequest,
+            @JsonPropertyDescription("Route to review agent.")
+            ReviewRequest reviewRequest,
+            @JsonPropertyDescription("Route to merger agent.")
+            MergerRequest mergerRequest,
+            @JsonPropertyDescription("Route to planning agent.")
+            PlanningAgentRequest planningAgentRequest,
+            @JsonPropertyDescription("Route to planning agent requests.")
+            PlanningAgentRequests planningAgentRequests,
+            @JsonPropertyDescription("Route to planning agent results.")
+            PlanningAgentResults planningAgentResults,
+            @JsonPropertyDescription("Route to ticket agent.")
+            TicketAgentRequest ticketAgentRequest,
+            @JsonPropertyDescription("Route to ticket agent requests.")
+            TicketAgentRequests ticketAgentRequests,
+            @JsonPropertyDescription("Route to ticket agent results.")
+            TicketAgentResults ticketAgentResults,
+            @JsonPropertyDescription("Route to discovery agent.")
+            DiscoveryAgentRequest discoveryAgentRequest,
+            @JsonPropertyDescription("Route to discovery agent requests.")
+            DiscoveryAgentRequests discoveryAgentRequests,
+            @JsonPropertyDescription("Route to discovery agent results.")
+            DiscoveryAgentResults discoveryAgentResults,
+            @JsonPropertyDescription("Route to context orchestrator.")
+            ContextOrchestratorRequest contextOrchestratorRequest
+    ) implements Routing {
     }
 
     @Builder(toBuilder = true)
@@ -2613,44 +2859,4 @@ public interface AgentModels {
         }
     }
 
-//    record ContextAgentRequest(String goal, String phase) {
-//    }
-
-//    record ContextAgentRequests(List<ContextAgentRequest> requests) {
-//    }
-
-//    record ContextCollectorRequest(String goal, String phase) {
-//    }
-
-//    record ContextOrchestratorRouting(
-//            ContextOrchestratorInterruptRequest interruptRequest,
-//            ContextAgentRequests agentRequests,
-//            ContextCollectorRequest orchestratorCollectorResult
-//    ) implements SomeOf {
-//    }
-
-//    record ContextAgentRouting(
-//            ContextAgentInterruptRequest interruptRequest,
-//            ContextAgentResult agentResult
-//    ) implements SomeOf {
-//    }
-
-//    record ContextCollectorRouting(
-//            ContextCollectorInterruptRequest interruptRequest,
-//            ContextCollectorResult collectorResult,
-//            OrchestratorRequest orchestratorRequest,
-//            DiscoveryOrchestratorRequest discoveryRequest,
-//            PlanningOrchestratorRequest planningRequest,
-//            TicketOrchestratorRequest ticketRequest,
-//            ContextOrchestratorRequest contextRequest,
-//            ReviewRequest reviewRequest,
-//            MergerRequest mergerRequest
-//    ) implements SomeOf {
-//    }
-
-    //    TODO: Need to add all of the ...AgentDispatchResult, routing to their appropriate collectors
-//    record ContextAgentDispatchRouting(
-//            ContextAgentDispatchInterruptRequest interruptRequest,
-//    ) implements SomeOf {
-//    }
 }

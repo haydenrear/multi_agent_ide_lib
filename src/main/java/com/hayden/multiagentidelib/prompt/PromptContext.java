@@ -21,7 +21,7 @@ public record PromptContext(
         ContextId currentContextId,
         List<UpstreamContext> upstreamContexts,
         PreviousContext previousContext,
-        BlackboardHistory.History blackboardHistory,
+        BlackboardHistory blackboardHistory,
         AgentModels.AgentRequest request,
         Map<String, Object> metadata
 ) {

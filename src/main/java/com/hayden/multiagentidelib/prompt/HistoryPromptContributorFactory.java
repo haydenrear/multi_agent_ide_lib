@@ -36,14 +36,14 @@ public class HistoryPromptContributorFactory implements PromptContributorFactory
     }
 
     private String buildInterruptContribution(
-            BlackboardHistory.History history,
+            BlackboardHistory history,
             AgentModels.InterruptRequest interrupt,
             AgentModels.AgentRequest request
     ) {
         if (history == null || interrupt == null) {
             return "";
         }
-        List<BlackboardHistory.Entry> entries = history.entries();
+        List<BlackboardHistory.Entry> entries = history.copyOfEntries();
         if (entries == null || entries.isEmpty()) {
             return "";
         }
@@ -55,17 +55,19 @@ public class HistoryPromptContributorFactory implements PromptContributorFactory
         return builder.toString().trim();
     }
 
-    private AgentModels.InterruptRequest findLastInterrupt(BlackboardHistory.History history) {
-        if (history == null || history.entries() == null) {
+    private AgentModels.InterruptRequest findLastInterrupt(BlackboardHistory history) {
+        var e = history.copyOfEntries();
+        if (history == null || e == null) {
             return null;
         }
-        List<BlackboardHistory.Entry> entries = history.entries();
+        List<BlackboardHistory.Entry> entries = e;
         for (int i = entries.size() - 1; i >= 0; i--) {
             BlackboardHistory.Entry entry = entries.get(i);
-            if (entry == null || entry.input() == null) {
+            Object input = entryInput(entry);
+            if (input == null) {
                 continue;
             }
-            if (entry.input() instanceof AgentModels.InterruptRequest interrupt) {
+            if (input instanceof AgentModels.InterruptRequest interrupt) {
                 return interrupt;
             }
         }
@@ -75,15 +77,26 @@ public class HistoryPromptContributorFactory implements PromptContributorFactory
     private Object findPreviousNonInterrupt(List<BlackboardHistory.Entry> entries) {
         for (int i = entries.size() - 1; i >= 0; i--) {
             BlackboardHistory.Entry entry = entries.get(i);
-            if (entry == null || entry.input() == null) {
+            Object input = entryInput(entry);
+            if (input == null) {
                 continue;
             }
-            if (entry.input() instanceof AgentModels.InterruptRequest) {
+            if (input instanceof AgentModels.InterruptRequest) {
                 continue;
             }
-            return entry.input();
+            return input;
         }
         return null;
+    }
+
+    private Object entryInput(BlackboardHistory.Entry entry) {
+        if (entry == null) {
+            return null;
+        }
+        return switch (entry) {
+            case BlackboardHistory.DefaultEntry defaultEntry -> defaultEntry.input();
+            case BlackboardHistory.MessageEntry messageEntry -> null;
+        };
     }
 
     private String formatRequestSummary(Object request) {
