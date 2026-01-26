@@ -1,7 +1,7 @@
 package com.hayden.multiagentidelib.template;
 
 import com.hayden.multiagentidelib.agent.AgentType;
-import com.hayden.multiagentidelib.agent.ContextId;
+import com.hayden.utilitymodule.acp.events.ArtifactKey;
 
 import java.util.List;
 import java.util.Map;
@@ -10,9 +10,9 @@ public interface DelegationTemplate {
 
     String schemaVersion();
 
-    ContextId resultId();
+    ArtifactKey resultId();
 
-    ContextId upstreamContextId();
+    ArtifactKey upstreamArtifactKey();
 
     String goal();
 
@@ -35,7 +35,7 @@ public interface DelegationTemplate {
 
     record ContextSelection(
             String selectionId,
-            ContextId sourceContextId,
+            ArtifactKey sourceContextId,
             String selectedContent,
             String selectionRationale
     ) {

@@ -3,6 +3,7 @@ package com.hayden.multiagentidelib.agent;
 import com.embabel.agent.api.common.OperationContext;
 import com.hayden.commitdiffcontext.events.EventSubscriber;
 import com.hayden.multiagentidelib.service.RequestEnrichment;
+import com.hayden.utilitymodule.acp.events.Artifact;
 import com.hayden.utilitymodule.acp.events.EventBus;
 import com.hayden.utilitymodule.acp.events.EventListener;
 import com.hayden.utilitymodule.acp.events.Events;
@@ -63,9 +64,9 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
         if (history == null || history.entries() == null) {
             return Optional.empty();
         }
-        List<BlackboardHistory.Entry> entries = history.entries();
+        List<Entry> entries = history.entries();
         for (int i = entries.size() - 1; i >= 0; i--) {
-            BlackboardHistory.Entry entry = entries.get(i);
+            Entry entry = entries.get(i);
             if (entry == null) {
                 continue;
             }
@@ -173,24 +174,24 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
 
     /**
      * Register an input in the blackboard history and hide it from the blackboard.
-     * This overload allows enriching the input with ContextId and PreviousContext before storing.
+     * This overload allows enriching the input with ArtifactKey and PreviousContext before storing.
      *
      * @param context The operation context
      * @param actionName The name of the action being executed
      * @param input The input object to register and hide
-     * @param requestEnrichment Optional enrichment service to set ContextId and PreviousContext
+     * @param requestEnrichment Optional enrichment service to set ArtifactKey and PreviousContext
      * @return Updated history with the new entry
      */
     public static BlackboardHistory registerAndHideInput(
             OperationContext context,
             String actionName,
-            Object input,
+            Artifact.AgentModel input,
             RequestEnrichment requestEnrichment
     ) {
         // Get or create history from context
         var history = getEntireBlackboardHistory(context);
 
-        // Enrich the input with ContextId and PreviousContext if enrichment service is provided
+        // Enrich the input with ArtifactKey and PreviousContext if enrichment service is provided
         Object enrichedInput = input;
         if (requestEnrichment != null && input != null) {
             enrichedInput = requestEnrichment.enrich(input, context);
@@ -503,11 +504,13 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
                     buildTargets(event.nodeId(), permissionRequested.originNodeId());
             case Events.PermissionResolvedEvent permissionResolved ->
                     buildTargets(event.nodeId(), permissionResolved.originNodeId());
+            case Events.ArtifactEvent artifactEvent ->
+                    new ArrayList<>();
         };
     }
 
     private static List<String> buildTargets(String nodeId, String parentNodeId, String... additionalParents) {
-        java.util.LinkedHashSet<String> targets = new java.util.LinkedHashSet<>();
+        LinkedHashSet<String> targets = new LinkedHashSet<>();
         String nodeTarget = nodeKey(nodeId);
         if (hasText(nodeTarget)) {
             targets.add(nodeTarget);

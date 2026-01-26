@@ -1,7 +1,7 @@
 package com.hayden.multiagentidelib.template;
 
 import com.hayden.multiagentidelib.agent.AgentModels;
-import com.hayden.multiagentidelib.agent.ContextId;
+import com.hayden.utilitymodule.acp.events.ArtifactKey;
 
 import java.util.List;
 import java.util.Map;
@@ -10,7 +10,7 @@ public interface ConsolidationTemplate {
 
     String schemaVersion();
 
-    ContextId resultId();
+    ArtifactKey resultId();
 
     List<InputReference> inputs();
 
@@ -24,7 +24,7 @@ public interface ConsolidationTemplate {
 
     AgentModels.CollectorDecision decision();
 
-    List<ContextId> upstreamContextChain();
+    List<ArtifactKey> upstreamContextChain();
 
     Map<String, String> metadata();
 
@@ -33,7 +33,7 @@ public interface ConsolidationTemplate {
     }
 
     record InputReference(
-            ContextId inputContextId,
+            ArtifactKey inputContextId,
             String inputType,
             String inputSummary
     ) {
@@ -42,26 +42,20 @@ public interface ConsolidationTemplate {
     record ConflictResolution(
             String conflictDescription,
             String resolutionApproach,
-            List<ContextId> conflictingInputs
+            List<ArtifactKey> conflictingInputs
     ) {
     }
 
     interface Curation {
-        ContextId contextId();
+        ArtifactKey artifactKey();
 
-        ContextId sourceResultId();
+        ArtifactKey sourceResultId();
 
         String selectionRationale();
     }
 
     record ConsolidationSummary(
-            List<InputReference> inputs,
-            String mergeStrategy,
-            List<ConflictResolution> conflictResolutions,
-            Map<String, Double> aggregatedMetrics,
             String consolidatedOutput,
-            AgentModels.CollectorDecision decision,
-            List<ContextId> upstreamContextChain,
             Map<String, String> metadata
     ) {
     }

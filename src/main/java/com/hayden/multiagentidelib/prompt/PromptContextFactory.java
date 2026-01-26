@@ -3,9 +3,9 @@ package com.hayden.multiagentidelib.prompt;
 import com.hayden.multiagentidelib.agent.AgentModels;
 import com.hayden.multiagentidelib.agent.AgentType;
 import com.hayden.multiagentidelib.agent.BlackboardHistory;
-import com.hayden.multiagentidelib.agent.ContextId;
 import com.hayden.multiagentidelib.agent.PreviousContext;
 import com.hayden.multiagentidelib.agent.UpstreamContext;
+import com.hayden.utilitymodule.acp.events.ArtifactKey;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Component;
@@ -40,7 +40,7 @@ public class PromptContextFactory {
             Object input,
             BlackboardHistory blackboardHistory
     ) {
-        ContextId contextId = null;
+        ArtifactKey contextId = null;
         List<UpstreamContext> upstreamContexts = new ArrayList<>();
         PreviousContext previousContext = null;
         AgentModels.AgentRequest request = input instanceof AgentModels.AgentRequest
@@ -148,7 +148,7 @@ public class PromptContextFactory {
      */
     public PromptContext build(
             AgentType agentType,
-            ContextId contextId,
+            ArtifactKey contextId,
             List<UpstreamContext> upstreamContexts,
             PreviousContext previousContext,
             BlackboardHistory blackboardHistory
@@ -170,7 +170,7 @@ public class PromptContextFactory {
      */
     public PromptContext build(
             AgentType agentType,
-            ContextId contextId,
+            ArtifactKey contextId,
             UpstreamContext upstreamContext,
             PreviousContext previousContext,
             BlackboardHistory blackboardHistory
@@ -189,10 +189,8 @@ public class PromptContextFactory {
         );
     }
 
-    private ContextId resolve(ContextId contextId) {
-        if (contextId == null)
-            return null;
-        return contextIdService.generate(contextId.workflowRunId(), contextId.agentType());
+    private ArtifactKey resolve(ArtifactKey contextId) {
+        return contextId;
     }
 
     private void collectNonNull(List<UpstreamContext> list, UpstreamContext context) {

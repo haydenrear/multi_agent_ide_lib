@@ -1,11 +1,11 @@
 package com.hayden.multiagentidelib.prompt;
 
 import com.hayden.multiagentidelib.agent.AgentType;
-import com.hayden.multiagentidelib.agent.ContextId;
 import com.hayden.multiagentidelib.agent.PreviousContext;
 import com.hayden.multiagentidelib.agent.UpstreamContext;
 import com.hayden.multiagentidelib.agent.BlackboardHistory;
 import com.hayden.multiagentidelib.agent.AgentModels;
+import com.hayden.utilitymodule.acp.events.ArtifactKey;
 import lombok.Builder;
 
 import java.util.List;
@@ -18,7 +18,7 @@ import java.util.Map;
 @Builder(toBuilder = true)
 public record PromptContext(
         AgentType agentType,
-        ContextId currentContextId,
+        ArtifactKey currentContextId,
         List<UpstreamContext> upstreamContexts,
         PreviousContext previousContext,
         BlackboardHistory blackboardHistory,

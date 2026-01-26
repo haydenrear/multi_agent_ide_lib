@@ -1,6 +1,7 @@
 package com.hayden.multiagentidelib.prompt;
 
 import com.hayden.multiagentidelib.agent.*;
+import com.hayden.utilitymodule.acp.events.ArtifactKey;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -65,7 +66,7 @@ class WeAreHerePromptContributorTest {
         @Test
         @DisplayName("should show orchestrator position in graph")
         void shouldShowOrchestratorPosition() {
-            var request = new AgentModels.OrchestratorRequest(new ContextId("workflow", AgentType.ORCHESTRATOR, 0), "Test goal", "DISCOVERY");
+            var request = new AgentModels.OrchestratorRequest(ArtifactKey.createRoot(), "Test goal", "DISCOVERY");
             var history = buildTestBlackboardHistory(new BlackboardHistory.History());
             var context = buildContext(AgentType.ORCHESTRATOR, request, history);
             
@@ -80,7 +81,7 @@ class WeAreHerePromptContributorTest {
         @Test
         @DisplayName("should show routing options for orchestrator")
         void shouldShowRoutingOptions() {
-            var request = new AgentModels.OrchestratorRequest(new ContextId("workflow", AgentType.ORCHESTRATOR, 0), "Test goal", "DISCOVERY");
+            var request = new AgentModels.OrchestratorRequest(ArtifactKey.createRoot(), "Test goal", "DISCOVERY");
             var history = buildTestBlackboardHistory(new BlackboardHistory.History());
             var context = buildContext(AgentType.ORCHESTRATOR, request, history);
             
@@ -95,7 +96,7 @@ class WeAreHerePromptContributorTest {
         @Test
         @DisplayName("should show empty history for first request")
         void shouldShowEmptyHistory() {
-            var request = new AgentModels.OrchestratorRequest(new ContextId("workflow", AgentType.ORCHESTRATOR, 0), "Test goal", "DISCOVERY");
+            var request = new AgentModels.OrchestratorRequest(ArtifactKey.createRoot(), "Test goal", "DISCOVERY");
             var history = buildTestBlackboardHistory(new BlackboardHistory.History());
             var context = buildContext(AgentType.ORCHESTRATOR, request, history);
             
@@ -114,7 +115,7 @@ class WeAreHerePromptContributorTest {
         void shouldShowDiscoveryOrchestratorPosition() {
             var request = new AgentModels.DiscoveryOrchestratorRequest("Test goal");
             var history = buildTestBlackboardHistory(new BlackboardHistory.History()
-                    .withEntry("coordinateWorkflow", new AgentModels.OrchestratorRequest(new ContextId("workflow", AgentType.ORCHESTRATOR, 0), "Test goal", "DISCOVERY")));
+                    .withEntry("coordinateWorkflow", new AgentModels.OrchestratorRequest(ArtifactKey.createRoot(), "Test goal", "DISCOVERY")));
             var context = buildContext(AgentType.DISCOVERY_ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
@@ -143,7 +144,7 @@ class WeAreHerePromptContributorTest {
         void shouldShowExecutionHistory() {
             var request = new AgentModels.DiscoveryOrchestratorRequest("Test goal");
             var history = buildTestBlackboardHistory(new BlackboardHistory.History()
-                    .withEntry("coordinateWorkflow", new AgentModels.OrchestratorRequest(new ContextId("workflow", AgentType.ORCHESTRATOR, 0), "Test goal", "DISCOVERY")));
+                    .withEntry("coordinateWorkflow", new AgentModels.OrchestratorRequest(ArtifactKey.createRoot(), "Test goal", "DISCOVERY")));
             var context = buildContext(AgentType.DISCOVERY_ORCHESTRATOR, request, history);
             
             String output = contributor.contribute(context);
@@ -459,7 +460,7 @@ class WeAreHerePromptContributorTest {
         void shouldMarkVisitedNodes() {
             var request = new AgentModels.PlanningOrchestratorRequest("Test goal");
             var history = buildTestBlackboardHistory(new BlackboardHistory.History()
-                    .withEntry("coordinateWorkflow", new AgentModels.OrchestratorRequest(new ContextId("workflow", AgentType.ORCHESTRATOR, 0), "Test goal", "DISCOVERY"))
+                    .withEntry("coordinateWorkflow", new AgentModels.OrchestratorRequest(ArtifactKey.createRoot(), "Test goal", "DISCOVERY"))
                     .withEntry("kickOffDiscovery", new AgentModels.DiscoveryOrchestratorRequest("Test goal")));
             var context = buildContext(AgentType.PLANNING_ORCHESTRATOR, request, history);
             
@@ -487,7 +488,7 @@ class WeAreHerePromptContributorTest {
         @Test
         @DisplayName("should show complete workflow graph")
         void shouldShowCompleteGraph() {
-            var request = new AgentModels.OrchestratorRequest(new ContextId("workflow", AgentType.ORCHESTRATOR, 0), "Test goal", "DISCOVERY");
+            var request = new AgentModels.OrchestratorRequest(ArtifactKey.createRoot(), "Test goal", "DISCOVERY");
             var context = buildContext(AgentType.ORCHESTRATOR, request, buildTestBlackboardHistory(new BlackboardHistory.History()));
             
             String output = contributor.contribute(context);
@@ -550,7 +551,7 @@ class WeAreHerePromptContributorTest {
     private PromptContext buildContext(AgentType agentType, AgentModels.AgentRequest request, BlackboardHistory history) {
         return PromptContext.builder()
                 .agentType(agentType)
-                .currentContextId(new ContextId("test-context", agentType , 0, Instant.now()))
+                .currentContextId(ArtifactKey.createRoot())
                 .request(request)
                 .blackboardHistory(history)
                 .upstreamContexts(List.of())
