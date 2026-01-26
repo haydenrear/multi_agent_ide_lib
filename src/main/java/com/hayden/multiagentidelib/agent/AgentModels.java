@@ -2,6 +2,7 @@ package com.hayden.multiagentidelib.agent;
 
 import com.embabel.agent.api.common.SomeOf;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.hayden.multiagentidelib.template.ConsolidationTemplate;
 import com.hayden.multiagentidelib.template.DelegationTemplate;
@@ -76,9 +77,11 @@ public interface AgentModels {
             MergerRequest,
             ReviewRequest
     {
+        @JsonIgnore
         ArtifactKey contextId();
 
         @Override
+        @JsonIgnore
         default ArtifactKey artifactKey() {
             return contextId();
         }
