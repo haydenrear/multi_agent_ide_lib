@@ -37,6 +37,9 @@ public class RequestEnrichment {
         if (!(input instanceof Artifact.AgentModel modelInput)) {
             return input;
         }
+        if (input instanceof AgentModels.AgentRequest request && request.contextId() != null) {
+            return input;
+        }
         BlackboardHistory history = null;
         if (context != null && context.getAgentProcess() != null && context.getAgentProcess().getBlackboard() != null) {
             history = context.getAgentProcess().getBlackboard().last(BlackboardHistory.class);

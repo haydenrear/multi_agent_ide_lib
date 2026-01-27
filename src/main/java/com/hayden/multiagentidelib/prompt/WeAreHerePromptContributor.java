@@ -77,7 +77,7 @@ public class WeAreHerePromptContributor implements PromptContributor {
         sb.append("### Workflow Graph\n\n");
         sb.append("```\n");
 
-        Class<?> currentRequestType = context.request() != null ? context.request().getClass() : null;
+        Class<?> currentRequestType = context.currentRequest() != null ? context.currentRequest().getClass() : null;
         List<Class<?>> visitedTypes = getVisitedTypes(context);
 
         // Main orchestrator level
@@ -298,12 +298,12 @@ public class WeAreHerePromptContributor implements PromptContributor {
         StringBuilder sb = new StringBuilder();
         sb.append("### Available Routing Options\n\n");
 
-        if (context.request() == null) {
+        if (context.currentRequest() == null) {
             sb.append("_No request context available._\n");
             return sb.toString();
         }
 
-        Class<?> requestType = context.request().getClass();
+        Class<?> requestType = context.currentRequest().getClass();
         Map<Class<?>, Class<?>> requestToRouting = WorkflowAgentGraphNode.getRequestToRoutingMap();
 
         Class<?> routingType = requestToRouting.get(requestType);

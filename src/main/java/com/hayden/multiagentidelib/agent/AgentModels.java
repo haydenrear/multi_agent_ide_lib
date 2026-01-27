@@ -30,7 +30,10 @@ public interface AgentModels {
         RESULT_HANDOFF
     }
 
-    interface AgentResult extends AgentContext {
+    sealed interface AgentResult extends AgentContext
+            permits DiscoveryAgentResult, DiscoveryCollectorResult, DiscoveryOrchestratorResult, MergerAgentResult, OrchestratorAgentResult, OrchestratorCollectorResult, PlanningAgentResult, PlanningCollectorResult, PlanningOrchestratorResult, ReviewAgentResult, TicketAgentResult, TicketCollectorResult, TicketOrchestratorResult
+
+    {
         ArtifactKey resultId();
 
         @Override
@@ -1023,28 +1026,6 @@ public interface AgentModels {
                 builder.append("Output:\n").append(output.trim()).append("\n");
             }
             return builder.toString().trim();
-        }
-    }
-
-    @Builder(toBuilder=true)
-    record SummaryAgentResult(
-            ArtifactKey resultId,
-            String output
-    ) implements AgentResult {
-        @Override
-        public String prettyPrint() {
-            return output == null ? "" : output.trim();
-        }
-    }
-
-    @Builder(toBuilder=true)
-    record ContextAgentResult(
-            ArtifactKey resultId,
-            String output
-    ) implements AgentResult {
-        @Override
-        public String prettyPrint() {
-            return output == null ? "" : output.trim();
         }
     }
 

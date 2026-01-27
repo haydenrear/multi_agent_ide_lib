@@ -15,14 +15,14 @@ public class HistoryPromptContributorFactory implements PromptContributorFactory
 
     @Override
     public List<PromptContributor> create(PromptContext context) {
-        if (context == null || context.blackboardHistory() == null || context.request() == null) {
+        if (context == null || context.blackboardHistory() == null || context.currentRequest() == null) {
             return List.of();
         }
         AgentModels.InterruptRequest interruptDescriptor = findLastInterrupt(context.blackboardHistory());
         if (interruptDescriptor == null) {
             return List.of();
         }
-        String contribution = buildInterruptContribution(context.blackboardHistory(), interruptDescriptor, context.request());
+        String contribution = buildInterruptContribution(context.blackboardHistory(), interruptDescriptor, context.currentRequest());
         if (contribution.isBlank()) {
             return List.of();
         }

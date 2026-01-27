@@ -1,5 +1,7 @@
 package com.hayden.multiagentidelib.prompt;
 
+import com.embabel.agent.api.common.ContextualPromptElement;
+import com.embabel.common.ai.prompt.PromptElement;
 import com.hayden.multiagentidelib.agent.AgentType;
 import com.hayden.multiagentidelib.agent.PreviousContext;
 import com.hayden.multiagentidelib.agent.UpstreamContext;
@@ -8,6 +10,7 @@ import com.hayden.multiagentidelib.agent.AgentModels;
 import com.hayden.utilitymodule.acp.events.ArtifactKey;
 import lombok.Builder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -22,9 +25,16 @@ public record PromptContext(
         List<UpstreamContext> upstreamContexts,
         PreviousContext previousContext,
         BlackboardHistory blackboardHistory,
-        AgentModels.AgentRequest request,
-        Map<String, Object> metadata
+        AgentModels.AgentRequest previousRequest,
+        AgentModels.AgentRequest currentRequest,
+        Map<String, Object> metadata,
+        List<ContextualPromptElement> promptContributors
 ) {
+
+    public PromptContext(AgentType agentType, ArtifactKey currentContextId, List<UpstreamContext> upstreamContexts, PreviousContext previousContext, BlackboardHistory blackboardHistory, AgentModels.AgentRequest previousRequest, AgentModels.AgentRequest currentRequest, Map<String, Object> metadata) {
+        this(agentType, currentContextId, upstreamContexts, previousContext, blackboardHistory, previousRequest, currentRequest, metadata, new ArrayList<>());
+    }
+
     /**
      * Constructor that normalizes null upstream contexts and metadata.
      */

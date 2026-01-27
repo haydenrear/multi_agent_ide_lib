@@ -2,8 +2,6 @@ package com.hayden.multiagentidelib.agent;
 
 import com.embabel.agent.api.common.OperationContext;
 import com.hayden.commitdiffcontext.events.EventSubscriber;
-import com.hayden.multiagentidelib.service.RequestEnrichment;
-import com.hayden.utilitymodule.acp.events.Artifact;
 import com.hayden.utilitymodule.acp.events.EventBus;
 import com.hayden.utilitymodule.acp.events.EventListener;
 import com.hayden.utilitymodule.acp.events.Events;
@@ -56,7 +54,7 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
         this.state = t.apply(this.state);
     }
 
-    private synchronized void addEntry(String actionName, Object enrichedInput) {
+    synchronized void addEntry(String actionName, Object enrichedInput) {
         this.history = this.history.withEntry(actionName, enrichedInput);
     }
 
@@ -169,45 +167,6 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
         }
         var options = context.getProcessContext().getProcessOptions();
         return options.getContextIdString();
-    }
-
-
-    /**
-     * Register an input in the blackboard history and hide it from the blackboard.
-     * This overload allows enriching the input with ArtifactKey and PreviousContext before storing.
-     *
-     * @param context The operation context
-     * @param actionName The name of the action being executed
-     * @param input The input object to register and hide
-     * @param requestEnrichment Optional enrichment service to set ArtifactKey and PreviousContext
-     * @return Updated history with the new entry
-     */
-    public static BlackboardHistory registerAndHideInput(
-            OperationContext context,
-            String actionName,
-            Artifact.AgentModel input,
-            RequestEnrichment requestEnrichment
-    ) {
-        // Get or create history from context
-        var history = getEntireBlackboardHistory(context);
-
-        // Enrich the input with ArtifactKey and PreviousContext if enrichment service is provided
-        Object enrichedInput = input;
-        if (requestEnrichment != null && input != null) {
-            enrichedInput = requestEnrichment.enrich(input, context);
-        }
-
-        // Add the enriched input to history
-        history.addEntry(actionName, enrichedInput);
-
-        if (enrichedInput != null) {
-            context.getAgentProcess().clear();
-        }
-
-        // Add updated history back to context
-        context.getAgentProcess().addObject(history);
-
-        return history;
     }
 
     public long countType(Class<?> requestType) {
@@ -367,7 +326,7 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
          * Check if we're in a loop by detecting repeated patterns
          */
         public boolean detectLoop(Class<?> type, int threshold) {
-            throw new RuntimeException("Detected loop.");
+            return countType(type) >= threshold;
         }
 
         /**

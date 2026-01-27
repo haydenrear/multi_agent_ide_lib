@@ -26,6 +26,8 @@ public class PromptContextFactory {
 
     private final ContextIdService contextIdService;
 
+    private final PromptContributorService promptContributor;
+
     /**
      * Build a PromptContext by pattern matching on the input object to extract
      * contextId, upstream contexts, and previousContext.
@@ -40,11 +42,24 @@ public class PromptContextFactory {
             AgentModels.AgentRequest input,
             BlackboardHistory blackboardHistory
     ) {
-        ArtifactKey contextId = null;
+        return build(agentType, input, null, input, blackboardHistory);
+    }
+
+    /**
+     * Build a PromptContext by pattern matching on the request used for context
+     * extraction while also carrying previous/current requests explicitly.
+     */
+    public PromptContext build(
+            AgentType agentType,
+            AgentModels.AgentRequest contextRequest,
+            AgentModels.AgentRequest previousRequest,
+            AgentModels.AgentRequest currentRequest,
+            BlackboardHistory blackboardHistory
+    ) {
         List<UpstreamContext> upstreamContexts = new ArrayList<>();
         PreviousContext previousContext = null;
 
-        switch (input) {
+        switch (contextRequest) {
             case AgentModels.OrchestratorRequest req -> {
                 collectNonNull(upstreamContexts, req.discoveryCuration());
                 collectNonNull(upstreamContexts, req.planningCuration());
@@ -74,7 +89,6 @@ public class PromptContextFactory {
                 previousContext = req.previousContext();
             }
             case AgentModels.PlanningOrchestratorRequest req -> {
-                contextId = resolve(req.contextId());
                 collectNonNull(upstreamContexts, req.discoveryCuration());
                 previousContext = req.previousContext();
             }
@@ -166,15 +180,18 @@ public class PromptContextFactory {
             }
         }
 
-        return new PromptContext(
+        var pc = new PromptContext(
                 agentType,
-                resolve(input.artifactKey()),
+                resolve(contextRequest != null ? contextRequest.artifactKey() : null),
                 upstreamContexts,
                 previousContext,
                 blackboardHistory,
-                input,
+                previousRequest,
+                currentRequest,
                 Map.of()
         );
+
+        return pc.toBuilder().promptContributors(this.promptContributor.getContributors(pc)).build();
     }
 
     /**
@@ -188,15 +205,18 @@ public class PromptContextFactory {
             PreviousContext previousContext,
             BlackboardHistory blackboardHistory
     ) {
-        return new PromptContext(
+        var pc = new PromptContext(
                 agentType,
                 resolve(contextId),
                 upstreamContexts != null ? upstreamContexts : List.of(),
                 previousContext,
                 blackboardHistory,
                 null,
+                null,
                 Map.of()
         );
+
+        return pc.toBuilder().promptContributors(this.promptContributor.getContributors(pc)).build();
     }
 
     /**
@@ -213,15 +233,18 @@ public class PromptContextFactory {
         List<UpstreamContext> contexts = upstreamContext != null 
                 ? List.of(upstreamContext) 
                 : List.of();
-        return new PromptContext(
+        var pc = new PromptContext(
                 agentType,
                 resolve(contextId),
                 contexts,
                 previousContext,
                 blackboardHistory,
                 null,
+                null,
                 Map.of()
         );
+
+        return pc.toBuilder().promptContributors(this.promptContributor.getContributors(pc)).build();
     }
 
     private ArtifactKey resolve(ArtifactKey contextId) {
