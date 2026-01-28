@@ -147,6 +147,7 @@ public class ContextManagerTools implements ToolCarrier {
             List<String> notes
     ) {}
 
+
     /**
      * Simplified view of a message event in a message entry.
      */

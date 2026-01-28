@@ -7,6 +7,7 @@ import com.hayden.multiagentidelib.agent.PreviousContext;
 import com.hayden.multiagentidelib.agent.UpstreamContext;
 import com.hayden.multiagentidelib.agent.BlackboardHistory;
 import com.hayden.multiagentidelib.agent.AgentModels;
+import com.hayden.utilitymodule.acp.events.Artifact;
 import com.hayden.utilitymodule.acp.events.ArtifactKey;
 import lombok.Builder;
 
@@ -28,11 +29,14 @@ public record PromptContext(
         AgentModels.AgentRequest previousRequest,
         AgentModels.AgentRequest currentRequest,
         Map<String, Object> metadata,
-        List<ContextualPromptElement> promptContributors
+        List<ContextualPromptElement> promptContributors,
+        String templateName,
+        Artifact.HashContext hashContext
 ) {
 
-    public PromptContext(AgentType agentType, ArtifactKey currentContextId, List<UpstreamContext> upstreamContexts, PreviousContext previousContext, BlackboardHistory blackboardHistory, AgentModels.AgentRequest previousRequest, AgentModels.AgentRequest currentRequest, Map<String, Object> metadata) {
-        this(agentType, currentContextId, upstreamContexts, previousContext, blackboardHistory, previousRequest, currentRequest, metadata, new ArrayList<>());
+    public PromptContext(AgentType agentType, ArtifactKey currentContextId, List<UpstreamContext> upstreamContexts, PreviousContext previousContext, BlackboardHistory blackboardHistory, AgentModels.AgentRequest previousRequest, AgentModels.AgentRequest currentRequest,
+                         Map<String, Object> metadata, String templateName) {
+        this(agentType, currentContextId, upstreamContexts, previousContext, blackboardHistory, previousRequest, currentRequest, metadata, new ArrayList<>(), templateName, Artifact.HashContext.defaultHashContext());
     }
 
     /**

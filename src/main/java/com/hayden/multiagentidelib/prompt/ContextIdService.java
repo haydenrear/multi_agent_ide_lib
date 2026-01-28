@@ -20,7 +20,7 @@ public class ContextIdService {
     }
 
     public ArtifactKey generate(String workflowRunId, AgentType agentType) {
-        return generate(workflowRunId, agentType, null);
+        return ArtifactKey.createRoot();
     }
 
 }

@@ -1,6 +1,7 @@
 package com.hayden.multiagentidelib.agent;
 
 import com.embabel.agent.api.common.OperationContext;
+import com.embabel.agent.core.Blackboard;
 import com.hayden.commitdiffcontext.events.EventSubscriber;
 import com.hayden.utilitymodule.acp.events.EventBus;
 import com.hayden.utilitymodule.acp.events.EventListener;
@@ -89,7 +90,7 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
                 .orElse(null);
     }
 
-    public static BlackboardHistory getEntireBlackboardHistory(OperationContext context) {
+    public static BlackboardHistory getEntireBlackboardHistory(Blackboard context) {
         return context.last(BlackboardHistory.class);
     }
 
@@ -106,7 +107,7 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
         return b.history();
     }
 
-    public static <T> T getLastFromHistory(OperationContext context, Class<T> inputType) {
+    public static <T> T getLastFromHistory(Blackboard context, Class<T> inputType) {
         var history = getEntireBlackboardHistory(context);
         if (history == null) {
             return null;

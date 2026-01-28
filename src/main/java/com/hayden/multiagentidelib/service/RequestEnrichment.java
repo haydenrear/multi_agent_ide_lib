@@ -8,6 +8,7 @@ import com.hayden.multiagentidelib.agent.PreviousContext;
 import com.hayden.multiagentidelib.prompt.ContextIdService;
 import com.hayden.utilitymodule.acp.events.Artifact;
 import com.hayden.utilitymodule.acp.events.ArtifactKey;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
  * Service for enriching request objects with ArtifactKey and PreviousContext.
  * Centralizes the logic for setting these fields consistently across all agent types.
  */
+@Slf4j
 @Service
 public class RequestEnrichment {
 
@@ -55,7 +57,8 @@ public class RequestEnrichment {
 
         return switch (input) {
             case AgentModels.OrchestratorRequest ignored ->
-                    null;
+                    findSecondToLastFromHistory(history,
+                            AgentModels.OrchestratorRequest.class);
             case AgentModels.OrchestratorCollectorRequest ignored ->
                     findLastFromHistory(history,
                             AgentModels.OrchestratorRequest.class);
@@ -159,6 +162,32 @@ public class RequestEnrichment {
                     findLastFromHistory(history, AgentModels.AgentRequest.class, AgentModels.AgentResult.class);
             default -> findLastFromHistory(history, Artifact.AgentModel.class);
         };
+    }
+
+    private Artifact.AgentModel findSecondToLastFromHistory(BlackboardHistory history, Class<?>... types) {
+        if (history == null || types == null || types.length == 0) {
+            return null;
+        }
+        List<BlackboardHistory.Entry> entries = history.copyOfEntries();
+        int numFound = 0;
+        for (int i = entries.size() - 1; i >= 0; i--) {
+            BlackboardHistory.Entry entry = entries.get(i);
+            if (entry == null) {
+                continue;
+            }
+            Object input = entry.input();
+            if (!(input instanceof Artifact.AgentModel model)) {
+                continue;
+            }
+            for (Class<?> type : types) {
+                if (type != null && type.isInstance(model) && numFound == 1) {
+                    return model;
+                } else {
+                    numFound += 1;
+                }
+            }
+        }
+        return null;
     }
 
     private Artifact.AgentModel findLastFromHistory(BlackboardHistory history, Class<?>... types) {
@@ -309,8 +338,20 @@ public class RequestEnrichment {
 
     private AgentModels.OrchestratorRequest enrichOrchestratorRequest(
             AgentModels.OrchestratorRequest req, OperationContext context, Artifact.AgentModel parent) {
-        var reqBuilder = req.toBuilder()
-                .contextId(resolveContextId(context, AgentType.ORCHESTRATOR, parent));
+        var reqBuilder = req.toBuilder();
+        if (req.key() == null && parent == null) {
+            String processId = context.getProcessContext().getAgentProcess().getId();
+            log.error("Orchestrator request key was null. This isnt' supposed to happen. Manually creating ArtifactKey with ID as OperationContext.processId({})",
+                      processId);
+            reqBuilder = reqBuilder.contextId(new ArtifactKey(processId));
+        } else if (parent != null) {
+            if (parent == req) {
+                log.error("Found strange instance where was same request.");
+            }
+
+            reqBuilder = reqBuilder.contextId(resolveContextId(context, AgentType.ORCHESTRATOR, parent));
+        }
+
         if (req.previousContext() == null) {
             reqBuilder = reqBuilder.previousContext(previousContextFactory.buildOrchestratorPreviousContext(context));
         }

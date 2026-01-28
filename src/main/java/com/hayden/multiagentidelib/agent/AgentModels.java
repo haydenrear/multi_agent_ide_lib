@@ -13,6 +13,7 @@ import com.hayden.utilitymodule.acp.events.Artifact;
 import com.hayden.utilitymodule.acp.events.ArtifactKey;
 import com.hayden.utilitymodule.acp.events.Events;
 import lombok.Builder;
+import lombok.With;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
@@ -1792,6 +1793,7 @@ public interface AgentModels {
 
     @Builder(toBuilder=true)
     @JsonClassDescription("Top-level orchestrator request to coordinate workflow phases.")
+    @With
     record OrchestratorRequest(
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,

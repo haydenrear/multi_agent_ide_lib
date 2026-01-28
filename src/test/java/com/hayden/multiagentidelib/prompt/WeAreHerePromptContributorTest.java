@@ -552,7 +552,7 @@ class WeAreHerePromptContributorTest {
         return PromptContext.builder()
                 .agentType(agentType)
                 .currentContextId(ArtifactKey.createRoot())
-                .request(request)
+                .currentRequest(request)
                 .blackboardHistory(history)
                 .upstreamContexts(List.of())
                 .metadata(Map.of())
