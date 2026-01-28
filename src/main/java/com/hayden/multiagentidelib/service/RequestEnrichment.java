@@ -182,7 +182,7 @@ public class RequestEnrichment {
             for (Class<?> type : types) {
                 if (type != null && type.isInstance(model) && numFound == 1) {
                     return model;
-                } else {
+                } else if (type != null && type.isInstance(model)) {
                     numFound += 1;
                 }
             }
