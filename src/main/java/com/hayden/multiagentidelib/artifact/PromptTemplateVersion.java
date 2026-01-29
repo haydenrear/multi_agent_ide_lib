@@ -29,7 +29,6 @@ public record PromptTemplateVersion(
         String hash,
         ArtifactKey templateArtifactKey,
         Instant lastUpdatedAt,
-        String sourceLocation,
         List<Artifact> children
 ) implements Templated {
 
@@ -63,7 +62,6 @@ public record PromptTemplateVersion(
                 hash,
                 artifactKey,
                 now,
-                sourceLocation,
                 new ArrayList<>()
         );
     }
@@ -86,7 +84,6 @@ public record PromptTemplateVersion(
                 contentHash,
                 templateArtifactKey,
                 lastUpdatedAt,
-                sourceLocation,
                 new ArrayList<>()
         );
     }

@@ -20,6 +20,11 @@ public class EpisodicMemoryPromptContributor implements PromptContributor {
 
     @Override
     public String contribute(PromptContext context) {
+        return template();
+    }
+
+    @Override
+    public String template() {
         return """
             ## Episodic Memory Tool
 

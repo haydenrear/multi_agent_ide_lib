@@ -7,19 +7,562 @@ import com.hayden.multiagentidelib.prompt.PromptContext;
 import com.hayden.multiagentidelib.prompt.PromptContributor;
 import com.hayden.multiagentidelib.prompt.WorkflowAgentGraphNode;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Prompt contributor that shows the agent where it is in the workflow graph,
  * what the history of execution has been, and what the available routing options mean.
+ * 
+ * This contributor uses a static template with placeholders for dynamic content,
+ * ensuring the template hash remains stable across executions.
  */
 public class WeAreHerePromptContributor implements PromptContributor {
 
     private static final String CURRENT_MARKER = ">>> YOU ARE HERE <<<";
     private static final String VISITED_MARKER = "[visited]";
+    
+    /**
+     * Static template with placeholders for dynamic content.
+     * Placeholders use Jinja2-style syntax: {{ variable_name }}
+     */
+    private static final String TEMPLATE = """
+        ## Workflow Position
+        
+        ### Workflow Graph
+        
+        ```
+        {{ node_orchestrator }}
+            │ (returns OrchestratorRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If collectorRequest → Orchestrator Collector
+            ├─▶ If orchestratorRequest → Discovery Orchestrator
+            └─▶ If contextManagerRequest → Context Manager
+            ▼
+        {{ node_discovery_orchestrator }}
+            │ (returns DiscoveryOrchestratorRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If agentRequests → Discovery Agents (dispatch)
+            ├─▶ If collectorRequest → Discovery Collector
+            └─▶ If contextManagerRequest → Context Manager
+            ▼
+        {{ node_discovery_agent_dispatch }}
+            │ (returns DiscoveryAgentDispatchRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If collectorRequest → Discovery Collector
+            └─▶ If contextManagerRequest → Context Manager
+            ▼
+        {{ node_discovery_agents }}
+            │ (each agent returns DiscoveryAgentRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If agentResult → Discovery results
+            ├─▶ If planningOrchestratorRequest → Planning Orchestrator
+            └─▶ If contextManagerRequest → Context Manager
+            ▼
+        {{ node_discovery_collector }}
+            │ (returns DiscoveryCollectorRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If collectorResult → handleDiscoveryCollectorBranch
+            │     ├─▶ discoveryRequest (ROUTE_BACK)
+            │     └─▶ planningRequest (ADVANCE_PHASE)
+            ├─▶ If orchestratorRequest → Orchestrator
+            ├─▶ If discoveryRequest → Discovery Orchestrator
+            ├─▶ If planningRequest → Planning Orchestrator
+            ├─▶ If ticketRequest → Ticket Orchestrator
+            ├─▶ If reviewRequest → Review Agent
+            ├─▶ If mergerRequest → Merger Agent
+            └─▶ If contextManagerRequest → Context Manager
+            ▼
+        {{ node_planning_orchestrator }}
+            │ (returns PlanningOrchestratorRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If agentRequests → Planning Agents (dispatch)
+            ├─▶ If collectorRequest → Planning Collector
+            └─▶ If contextManagerRequest → Context Manager
+            ▼
+        {{ node_planning_agent_dispatch }}
+            │ (returns PlanningAgentDispatchRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If planningCollectorRequest → Planning Collector
+            └─▶ If contextManagerRequest → Context Manager
+            ▼
+        {{ node_planning_agents }}
+            │ (each agent returns PlanningAgentRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If agentResult → Planning results
+            └─▶ If contextManagerRequest → Context Manager
+            ▼
+        {{ node_planning_collector }}
+            │ (returns PlanningCollectorRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If collectorResult → handlePlanningCollectorBranch
+            │     ├─▶ planningRequest (ROUTE_BACK)
+            │     └─▶ ticketOrchestratorRequest (ADVANCE_PHASE)
+            ├─▶ If planningRequest → Planning Orchestrator
+            ├─▶ If ticketOrchestratorRequest → Ticket Orchestrator
+            ├─▶ If discoveryOrchestratorRequest → Discovery Orchestrator
+            ├─▶ If orchestratorCollectorRequest → Orchestrator Collector
+            ├─▶ If reviewRequest → Review Agent
+            ├─▶ If mergerRequest → Merger Agent
+            └─▶ If contextManagerRequest → Context Manager
+            ▼
+        {{ node_ticket_orchestrator }}
+            │ (returns TicketOrchestratorRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If agentRequests → Ticket Agents (dispatch)
+            ├─▶ If collectorRequest → Ticket Collector
+            └─▶ If contextManagerRequest → Context Manager
+            ▼
+        {{ node_ticket_agent_dispatch }}
+            │ (returns TicketAgentDispatchRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If ticketCollectorRequest → Ticket Collector
+            └─▶ If contextManagerRequest → Context Manager
+            ▼
+        {{ node_ticket_agents }}
+            │ (each agent returns TicketAgentRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If agentResult → Ticket results
+            └─▶ If contextManagerRequest → Context Manager
+            ▼
+        {{ node_ticket_collector }}
+            │ (returns TicketCollectorRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If collectorResult → handleTicketCollectorBranch
+            │     ├─▶ ticketRequest (ROUTE_BACK)
+            │     └─▶ orchestratorCollectorRequest (ADVANCE_PHASE)
+            ├─▶ If ticketRequest → Ticket Orchestrator
+            ├─▶ If orchestratorCollectorRequest → Orchestrator Collector
+            ├─▶ If reviewRequest → Review Agent
+            ├─▶ If mergerRequest → Merger Agent
+            └─▶ If contextManagerRequest → Context Manager
+            ▼
+        {{ node_orchestrator_collector }}
+            │ (returns OrchestratorCollectorRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If collectorResult → handleOrchestratorCollectorBranch
+            │     ├─▶ orchestratorRequest (ROUTE_BACK)
+            │     └─▶ COMPLETE (ADVANCE_PHASE)
+            ├─▶ If orchestratorRequest → Orchestrator
+            ├─▶ If discoveryRequest → Discovery Orchestrator
+            ├─▶ If planningRequest → Planning Orchestrator
+            ├─▶ If ticketRequest → Ticket Orchestrator
+            ├─▶ If reviewRequest → Review Agent
+            ├─▶ If mergerRequest → Merger Agent
+            └─▶ If contextManagerRequest → Context Manager
+            ▼
+          COMPLETE
+        
+        ─────────────────────────────────────────────────────────────────────────────
+        SIDE NODES (can be reached from collectors and route back to collectors)
+        ─────────────────────────────────────────────────────────────────────────────
+        
+        {{ node_review }}
+            │ (returns ReviewRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If reviewResult → Review results
+            ├─▶ If orchestratorCollectorRequest → Orchestrator Collector
+            ├─▶ If discoveryCollectorRequest → Discovery Collector
+            ├─▶ If planningCollectorRequest → Planning Collector
+            ├─▶ If ticketCollectorRequest → Ticket Collector
+            └─▶ If contextManagerRequest → Context Manager
+        
+        {{ node_merger }}
+            │ (returns MergerRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If mergerResult → Merger results
+            ├─▶ If orchestratorCollectorRequest → Orchestrator Collector
+            ├─▶ If discoveryCollectorRequest → Discovery Collector
+            ├─▶ If planningCollectorRequest → Planning Collector
+            ├─▶ If ticketCollectorRequest → Ticket Collector
+            └─▶ If contextManagerRequest → Context Manager
+        
+        {{ node_context_manager }}
+            │ (returns ContextManagerResultRouting)
+            ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)
+            ├─▶ If orchestratorRequest → Orchestrator
+            ├─▶ If orchestratorCollectorRequest → Orchestrator Collector
+            ├─▶ If discoveryOrchestratorRequest → Discovery Orchestrator
+            ├─▶ If discoveryCollectorRequest → Discovery Collector
+            ├─▶ If planningOrchestratorRequest → Planning Orchestrator
+            ├─▶ If planningCollectorRequest → Planning Collector
+            ├─▶ If ticketOrchestratorRequest → Ticket Orchestrator
+            ├─▶ If ticketCollectorRequest → Ticket Collector
+            ├─▶ If reviewRequest → Review Agent
+            ├─▶ If mergerRequest → Merger Agent
+            ├─▶ If planningAgentRequest → Planning Agent
+            ├─▶ If planningAgentRequests → Planning Agent Dispatch
+            ├─▶ If planningAgentResults → Planning Agent Results
+            ├─▶ If ticketAgentRequest → Ticket Agent
+            ├─▶ If ticketAgentRequests → Ticket Agent Dispatch
+            ├─▶ If ticketAgentResults → Ticket Agent Results
+            ├─▶ If discoveryAgentRequest → Discovery Agent
+            ├─▶ If discoveryAgentRequests → Discovery Agent Dispatch
+            ├─▶ If discoveryAgentResults → Discovery Agent Results
+            └─▶ If contextOrchestratorRequest → Context Manager (recursive)
+        ```
+        
+        ### Execution History
+        
+        {{ execution_history }}
+        
+        ### Available Routing Options
+        
+        {{ routing_options }}
+        """;
+
+    // Guidance templates for each request type - static text blocks
+    private static final Map<Class<?>, String> GUIDANCE_TEMPLATES = initGuidanceTemplates();
+
+    private static Map<Class<?>, String> initGuidanceTemplates() {
+        Map<Class<?>, String> templates = new HashMap<>();
+        
+        templates.put(AgentModels.OrchestratorRequest.class, """
+            **Guidance:** You must return an `OrchestratorRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `collectorRequest` - Route to Orchestrator Collector (final consolidation)
+            - `orchestratorRequest` - Route to Discovery Orchestrator
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Happy path:** For a new workflow, set `orchestratorRequest` to start discovery.
+            Only set `collectorRequest` when ALL workflow phases are complete.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.DiscoveryOrchestratorRequest.class, """
+            **Guidance:** You must return a `DiscoveryOrchestratorRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `agentRequests` - Delegate to multiple discovery agents (contains list of DiscoveryAgentRequest)
+            - `collectorRequest` - Route to Discovery Collector to consolidate results
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Happy path:** Set `agentRequests` to dispatch discovery work, then later set
+            `collectorRequest` when agents have gathered sufficient information.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.DiscoveryCollectorRequest.class, """
+            **Guidance:** You must return a `DiscoveryCollectorRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `collectorResult` - Collector result with CollectorDecision (triggers handleDiscoveryCollectorBranch)
+            - `orchestratorRequest` - Route to main Orchestrator
+            - `discoveryRequest` - Route back to Discovery Orchestrator
+            - `planningRequest` - Route to Planning Orchestrator
+            - `ticketRequest` - Route to Ticket Orchestrator
+            - `reviewRequest` - Route to Review Agent
+            - `mergerRequest` - Route to Merger Agent
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Branching behavior when `collectorResult` is set:**
+            - Framework calls `handleDiscoveryCollectorBranch` which interprets the decision
+            - ADVANCE_PHASE → handler sets `planningRequest`
+            - ROUTE_BACK → handler sets `discoveryRequest`
+
+            **Most common:** Use `collectorResult` for standard flow control.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.PlanningOrchestratorRequest.class, """
+            **Guidance:** You must return a `PlanningOrchestratorRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `agentRequests` - Delegate to multiple planning agents (contains list of PlanningAgentRequest)
+            - `collectorRequest` - Route to Planning Collector to consolidate results
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Happy path:** Set `agentRequests` to dispatch planning work, then later set
+            `collectorRequest` when planning is complete.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.PlanningCollectorRequest.class, """
+            **Guidance:** You must return a `PlanningCollectorRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `collectorResult` - Collector result with CollectorDecision (triggers handlePlanningCollectorBranch)
+            - `planningRequest` - Route back to Planning Orchestrator
+            - `ticketOrchestratorRequest` - Route to Ticket Orchestrator
+            - `discoveryOrchestratorRequest` - Route to Discovery Orchestrator
+            - `orchestratorCollectorRequest` - Route to Orchestrator Collector
+            - `reviewRequest` - Route to Review Agent
+            - `mergerRequest` - Route to Merger Agent
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Branching behavior when `collectorResult` is set:**
+            - Framework calls `handlePlanningCollectorBranch` which interprets the decision
+            - ADVANCE_PHASE → handler sets `ticketOrchestratorRequest`
+            - ROUTE_BACK → handler sets `planningRequest`
+
+            **Most common:** Use `collectorResult` for standard flow control.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.TicketOrchestratorRequest.class, """
+            **Guidance:** You must return a `TicketOrchestratorRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `agentRequests` - Delegate to multiple ticket agents (contains list of TicketAgentRequest)
+            - `collectorRequest` - Route to Ticket Collector to consolidate results
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Happy path:** Set `agentRequests` to dispatch ticket execution work, then later set
+            `collectorRequest` when implementation is complete.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.TicketCollectorRequest.class, """
+            **Guidance:** You must return a `TicketCollectorRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `collectorResult` - Collector result with CollectorDecision (triggers handleTicketCollectorBranch)
+            - `ticketRequest` - Route back to Ticket Orchestrator
+            - `orchestratorCollectorRequest` - Route to Orchestrator Collector
+            - `reviewRequest` - Route to Review Agent
+            - `mergerRequest` - Route to Merger Agent
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Branching behavior when `collectorResult` is set:**
+            - Framework calls `handleTicketCollectorBranch` which interprets the decision
+            - ADVANCE_PHASE → handler sets `orchestratorCollectorRequest`
+            - ROUTE_BACK → handler sets `ticketRequest`
+
+            **Most common:** Use `collectorResult` for standard flow control.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.OrchestratorCollectorRequest.class, """
+            **Guidance:** You must return an `OrchestratorCollectorRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `collectorResult` - Collector result with CollectorDecision (triggers handleOrchestratorCollectorBranch)
+            - `orchestratorRequest` - Route back to Orchestrator
+            - `discoveryRequest` - Route to Discovery Orchestrator
+            - `planningRequest` - Route to Planning Orchestrator
+            - `ticketRequest` - Route to Ticket Orchestrator
+            - `reviewRequest` - Route to Review Agent
+            - `mergerRequest` - Route to Merger Agent
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Branching behavior when `collectorResult` is set:**
+            - Framework calls `handleOrchestratorCollectorBranch` which interprets the decision
+            - ADVANCE_PHASE → workflow complete (requestedPhase="COMPLETE")
+            - ROUTE_BACK → restart at specific phase
+
+            **Most common:** Use `collectorResult` with ADVANCE_PHASE for workflow completion.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.DiscoveryAgentRequest.class, """
+            **Guidance:** You must return a `DiscoveryAgentRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `agentResult` - Return discovery findings (contains DiscoveryReport)
+            - `planningOrchestratorRequest` - Bypass to Planning Orchestrator (rare)
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Happy path:** Set `agentResult` with your discovery findings.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.PlanningAgentRequest.class, """
+            **Guidance:** You must return a `PlanningAgentRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `agentResult` - Return planning results (contains tickets)
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Happy path:** Set `agentResult` with your planning tickets.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.TicketAgentRequest.class, """
+            **Guidance:** You must return a `TicketAgentRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `agentResult` - Return ticket execution results (files modified, tests, commits)
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Happy path:** Set `agentResult` with your implementation results.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.DiscoveryAgentResults.class, """
+            **Guidance:** You must return a `DiscoveryAgentDispatchRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `collectorRequest` - Route to Discovery Collector
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Happy path:** Set `collectorRequest` to consolidate discovery results.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.PlanningAgentResults.class, """
+            **Guidance:** You must return a `PlanningAgentDispatchRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `planningCollectorRequest` - Route to Planning Collector
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Happy path:** Set `planningCollectorRequest` to consolidate planning results.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.TicketAgentResults.class, """
+            **Guidance:** You must return a `TicketAgentDispatchRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `ticketCollectorRequest` - Route to Ticket Collector
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Happy path:** Set `ticketCollectorRequest` to consolidate ticket results.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.ReviewRequest.class, """
+            **Guidance:** You must return a `ReviewRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `reviewResult` - Return review findings (contains ReviewAgentResult)
+            - `orchestratorCollectorRequest` - Route to Orchestrator Collector
+            - `discoveryCollectorRequest` - Route to Discovery Collector
+            - `planningCollectorRequest` - Route to Planning Collector
+            - `ticketCollectorRequest` - Route to Ticket Collector
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Return routes:** The request includes `returnTo*` fields indicating which collector 
+            invoked you. Route back to the appropriate collector after completing your review.
+
+            **Happy path:** Set `reviewResult` with your review findings, then route back to 
+            the originating collector using the corresponding `*CollectorRequest` field.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.MergerRequest.class, """
+            **Guidance:** You must return a `MergerRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `mergerResult` - Return merge validation results (contains MergerAgentResult)
+            - `orchestratorCollectorRequest` - Route to Orchestrator Collector
+            - `discoveryCollectorRequest` - Route to Discovery Collector
+            - `planningCollectorRequest` - Route to Planning Collector
+            - `ticketCollectorRequest` - Route to Ticket Collector
+            - `contextManagerRequest` - Route to Context Manager for context reconstruction
+
+            **Return routes:** The request includes `returnTo*` fields indicating which collector 
+            invoked you. Route back to the appropriate collector after completing your merge validation.
+
+            **Happy path:** Set `mergerResult` with your merge findings, then route back to 
+            the originating collector using the corresponding `*CollectorRequest` field.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.ContextManagerRoutingRequest.class, """
+            **Guidance:** You must return a `ContextManagerRequest` assembled by the routing action.
+
+            **Routing options:**
+            - `reason` - Explain why context reconstruction is needed
+            - `type` - Choose the reconstruction type (INTROSPECT_AGENT_CONTEXT or PROCEED)
+
+            **Happy path:** Provide a concise reason and pick the most appropriate type.
+            """);
+        
+        templates.put(AgentModels.ContextManagerRequest.class, """
+            **Guidance:** You must return a `ContextManagerResultRouting` with exactly ONE field set.
+
+            **Routing options:**
+            - `interruptRequest` - Pause or stop execution per interrupt request
+            - `orchestratorRequest` - Route to Orchestrator
+            - `orchestratorCollectorRequest` - Route to Orchestrator Collector
+            - `discoveryOrchestratorRequest` - Route to Discovery Orchestrator
+            - `discoveryCollectorRequest` - Route to Discovery Collector
+            - `planningOrchestratorRequest` - Route to Planning Orchestrator
+            - `planningCollectorRequest` - Route to Planning Collector
+            - `ticketOrchestratorRequest` - Route to Ticket Orchestrator
+            - `ticketCollectorRequest` - Route to Ticket Collector
+            - `reviewRequest` - Route to Review Agent
+            - `mergerRequest` - Route to Merger Agent
+            - `planningAgentRequest` - Route to Planning Agent
+            - `planningAgentRequests` - Route to Planning Agent dispatch
+            - `planningAgentResults` - Route to Planning Agent results
+            - `ticketAgentRequest` - Route to Ticket Agent
+            - `ticketAgentRequests` - Route to Ticket Agent dispatch
+            - `ticketAgentResults` - Route to Ticket Agent results
+            - `discoveryAgentRequest` - Route to Discovery Agent
+            - `discoveryAgentRequests` - Route to Discovery Agent dispatch
+            - `discoveryAgentResults` - Route to Discovery Agent results
+            - `contextOrchestratorRequest` - Route to Context Manager (recursive)
+
+            **Available return routes in this request (may be null):**
+            - `returnToOrchestrator`
+            - `returnToOrchestratorCollector`
+            - `returnToDiscoveryOrchestrator`
+            - `returnToDiscoveryCollector`
+            - `returnToPlanningOrchestrator`
+            - `returnToPlanningCollector`
+            - `returnToTicketOrchestrator`
+            - `returnToTicketCollector`
+            - `returnToReview`
+            - `returnToMerger`
+            - `returnToPlanningAgent`
+            - `returnToPlanningAgentRequests`
+            - `returnToPlanningAgentResults`
+            - `returnToTicketAgent`
+            - `returnToTicketAgentRequests`
+            - `returnToTicketAgentResults`
+            - `returnToDiscoveryAgent`
+            - `returnToDiscoveryAgentRequests`
+            - `returnToDiscoveryAgentResults`
+            - `returnToContextOrchestrator`
+
+            **Constraint:** Exactly one `returnTo*` field should be non-null in any ContextManagerRequest.
+
+            **Happy path:** Route to the agent that can most directly act on the reconstructed context.
+            """ + INTERRUPT_GUIDANCE);
+        
+        // Dispatch routings (aggregate results from parallel agents)
+        templates.put(AgentModels.DiscoveryAgentRequests.class, """
+            **Guidance:** You are in discovery agent dispatch. Individual discovery agents have been 
+            invoked and their results will be aggregated.
+
+            This is an intermediate state - the framework will collect results and route to 
+            `DiscoveryAgentDispatchRouting` which typically routes to `Discovery Collector`.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.PlanningAgentRequests.class, """
+            **Guidance:** You are in planning agent dispatch. Individual planning agents have been 
+            invoked and their results will be aggregated.
+
+            This is an intermediate state - the framework will collect results and route to 
+            `PlanningAgentDispatchRouting` which typically routes to `Planning Collector`.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        templates.put(AgentModels.TicketAgentRequests.class, """
+            **Guidance:** You are in ticket agent dispatch. Individual ticket agents have been 
+            invoked and their results will be aggregated.
+
+            This is an intermediate state - the framework will collect results and route to 
+            `TicketAgentDispatchRouting` which typically routes to `Ticket Collector`.
+            """ + INTERRUPT_GUIDANCE + CONTEXT_MANAGER_GUIDANCE);
+        
+        return Collections.unmodifiableMap(templates);
+    }
+
+    private static final String INTERRUPT_GUIDANCE = """
+
+        **Interrupt guidance:** If uncertain, emit an `interruptRequest`. You may emit interrupts multiple times if more context is needed.
+        Include `reason`, `contextForDecision`, `choices`, `confirmationItems`, and the agent-specific interrupt context fields.
+        """;
+
+    private static final String CONTEXT_MANAGER_GUIDANCE = """
+
+        **Context guidance:** To request context reconstruction, set `contextManagerRequest`
+        with a `ContextManagerRoutingRequest` (provide `reason` and `type`).
+        """;
 
     @Override
     public String name() {
@@ -28,7 +571,6 @@ public class WeAreHerePromptContributor implements PromptContributor {
 
     @Override
     public Set<AgentType> applicableAgents() {
-        // Apply to all workflow agents that make routing decisions
         return Set.of(
                 AgentType.ORCHESTRATOR,
                 AgentType.ORCHESTRATOR_COLLECTOR,
@@ -48,150 +590,100 @@ public class WeAreHerePromptContributor implements PromptContributor {
     }
 
     @Override
+    public String template() {
+        return TEMPLATE;
+    }
+
+    @Override
+    public Map<String, Object> args() {
+        // Base args are empty - actual args come from contribute() at runtime
+        return Map.of();
+    }
+
+    @Override
     public String contribute(PromptContext context) {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("## Workflow Position\n\n");
-
-        // Build the graph visualization
-        sb.append(buildWorkflowGraph(context));
-
-        // Show execution history
-        sb.append("\n");
-        sb.append(buildExecutionHistory(context));
-
-        // Show routing options for current position
-        sb.append("\n");
-        sb.append(buildRoutingOptions(context));
-
-        return sb.toString();
+        Map<String, Object> runtimeArgs = buildRuntimeArgs(context);
+        return render(TEMPLATE, runtimeArgs);
     }
 
     @Override
     public int priority() {
-        return 90; // High priority - show near the top of the prompt
+        return 90;
     }
 
     /**
-     * Build an ASCII representation of the workflow graph with "You are here" marker
+     * Build runtime arguments for template rendering based on context.
      */
-    private String buildWorkflowGraph(PromptContext context) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("### Workflow Graph\n\n");
-        sb.append("```\n");
-
-        Class<?> currentRequestType = context.currentRequest() != null ? context.currentRequest().getClass() : null;
+    private Map<String, Object> buildRuntimeArgs(PromptContext context) {
+        Map<String, Object> args = new HashMap<>();
+        
+        Class<?> currentRequestType = context.currentRequest() != null 
+                ? context.currentRequest().getClass() 
+                : null;
         List<Class<?>> visitedTypes = getVisitedTypes(context);
 
-        // Main orchestrator level
-        sb.append(nodeDisplay("Orchestrator", AgentModels.OrchestratorRequest.class, currentRequestType, visitedTypes));
-        sb.append("\n    │ (returns OrchestratorRouting)\n");
-        sb.append("    ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)\n");
-        sb.append("    ├─▶ If collectorRequest → Orchestrator Collector\n");
-        sb.append("    └─▶ If orchestratorRequest → Discovery Orchestrator\n");
-        sb.append("    ▼\n");
+        // Main workflow nodes
+        args.put("node_orchestrator", nodeDisplay("Orchestrator", 
+                AgentModels.OrchestratorRequest.class, currentRequestType, visitedTypes));
+        args.put("node_discovery_orchestrator", nodeDisplay("Discovery Orchestrator", 
+                AgentModels.DiscoveryOrchestratorRequest.class, currentRequestType, visitedTypes));
+        args.put("node_discovery_agent_dispatch", nodeDisplay("Discovery Agent Dispatch", 
+                AgentModels.DiscoveryAgentRequests.class, currentRequestType, visitedTypes));
+        args.put("node_discovery_agents", nodeDisplay("Discovery Agents", 
+                AgentModels.DiscoveryAgentRequest.class, currentRequestType, visitedTypes));
+        args.put("node_discovery_collector", nodeDisplay("Discovery Collector", 
+                AgentModels.DiscoveryCollectorRequest.class, currentRequestType, visitedTypes));
+        args.put("node_planning_orchestrator", nodeDisplay("Planning Orchestrator", 
+                AgentModels.PlanningOrchestratorRequest.class, currentRequestType, visitedTypes));
+        args.put("node_planning_agent_dispatch", nodeDisplay("Planning Agent Dispatch", 
+                AgentModels.PlanningAgentRequests.class, currentRequestType, visitedTypes));
+        args.put("node_planning_agents", nodeDisplay("Planning Agents", 
+                AgentModels.PlanningAgentRequest.class, currentRequestType, visitedTypes));
+        args.put("node_planning_collector", nodeDisplay("Planning Collector", 
+                AgentModels.PlanningCollectorRequest.class, currentRequestType, visitedTypes));
+        args.put("node_ticket_orchestrator", nodeDisplay("Ticket Orchestrator", 
+                AgentModels.TicketOrchestratorRequest.class, currentRequestType, visitedTypes));
+        args.put("node_ticket_agent_dispatch", nodeDisplay("Ticket Agent Dispatch", 
+                AgentModels.TicketAgentRequests.class, currentRequestType, visitedTypes));
+        args.put("node_ticket_agents", nodeDisplay("Ticket Agents", 
+                AgentModels.TicketAgentRequest.class, currentRequestType, visitedTypes));
+        args.put("node_ticket_collector", nodeDisplay("Ticket Collector", 
+                AgentModels.TicketCollectorRequest.class, currentRequestType, visitedTypes));
+        args.put("node_orchestrator_collector", nodeDisplay("Orchestrator Collector", 
+                AgentModels.OrchestratorCollectorRequest.class, currentRequestType, visitedTypes));
 
-        // Discovery phase
-        sb.append(nodeDisplay("Discovery Orchestrator", AgentModels.DiscoveryOrchestratorRequest.class, currentRequestType, visitedTypes));
-        sb.append("\n    │ (returns DiscoveryOrchestratorRouting)\n");
-        sb.append("    ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)\n");
-        sb.append("    ├─▶ If agentRequests → Discovery Agents (dispatch)\n");
-        sb.append("    └─▶ If collectorRequest → Discovery Collector\n");
-        sb.append("    ▼\n");
+        // Side nodes (can be reached from collectors)
+        args.put("node_review", nodeDisplay("Review Agent", 
+                AgentModels.ReviewRequest.class, currentRequestType, visitedTypes));
+        args.put("node_merger", nodeDisplay("Merger Agent", 
+                AgentModels.MergerRequest.class, currentRequestType, visitedTypes));
+        args.put("node_context_manager", nodeDisplay("Context Manager", 
+                AgentModels.ContextManagerRequest.class, currentRequestType, visitedTypes));
 
-        sb.append(nodeDisplay("Discovery Agents", AgentModels.DiscoveryAgentRequests.class, currentRequestType, visitedTypes));
-        sb.append("\n    │ (each agent returns DiscoveryAgentRouting)\n");
-        sb.append("    ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)\n");
-        sb.append("    ├─▶ If agentResult → Discovery results\n");
-        sb.append("    └─▶ If planningOrchestratorRequest → Planning Orchestrator\n");
-        sb.append("    ▼\n");
+        // Execution history
+        args.put("execution_history", buildExecutionHistory(context));
 
-        sb.append(nodeDisplay("Discovery Collector", AgentModels.DiscoveryCollectorRequest.class, currentRequestType, visitedTypes));
-        sb.append("\n    │ (returns DiscoveryCollectorRouting)\n");
-        sb.append("    ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)\n");
-        sb.append("    ├─▶ If collectorResult → handleDiscoveryCollectorBranch\n");
-        sb.append("    │     ├─▶ discoveryRequest (ROUTE_BACK)\n");
-        sb.append("    │     └─▶ planningRequest (ADVANCE_PHASE)\n");
-        sb.append("    ├─▶ If discoveryRequest → Discovery Orchestrator\n");
-        sb.append("    ├─▶ If planningRequest → Planning Orchestrator\n");
-        sb.append("    ├─▶ If orchestratorRequest → Orchestrator\n");
-        sb.append("    └─▶ If reviewRequest/mergerRequest → Review/Merger\n");
-        sb.append("    ▼\n");
+        // Routing options
+        args.put("routing_options", buildRoutingOptions(context));
 
-        // Planning phase
-        sb.append(nodeDisplay("Planning Orchestrator", AgentModels.PlanningOrchestratorRequest.class, currentRequestType, visitedTypes));
-        sb.append("\n    │ (returns PlanningOrchestratorRouting)\n");
-        sb.append("    ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)\n");
-        sb.append("    ├─▶ If agentRequests → Planning Agents (dispatch)\n");
-        sb.append("    └─▶ If collectorRequest → Planning Collector\n");
-        sb.append("    ▼\n");
-
-        sb.append(nodeDisplay("Planning Agents", AgentModels.PlanningAgentRequests.class, currentRequestType, visitedTypes));
-        sb.append("\n    │ (each agent returns PlanningAgentRouting)\n");
-        sb.append("    ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)\n");
-        sb.append("    └─▶ If agentResult → Planning results\n");
-        sb.append("    ▼\n");
-
-        sb.append(nodeDisplay("Planning Collector", AgentModels.PlanningCollectorRequest.class, currentRequestType, visitedTypes));
-        sb.append("\n    │ (returns PlanningCollectorRouting)\n");
-        sb.append("    ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)\n");
-        sb.append("    ├─▶ If collectorResult → handlePlanningCollectorBranch\n");
-        sb.append("    │     ├─▶ planningRequest (ROUTE_BACK)\n");
-        sb.append("    │     └─▶ ticketOrchestratorRequest (ADVANCE_PHASE)\n");
-        sb.append("    ├─▶ If planningRequest → Planning Orchestrator\n");
-        sb.append("    ├─▶ If ticketOrchestratorRequest → Ticket Orchestrator\n");
-        sb.append("    ├─▶ If discoveryOrchestratorRequest → Discovery Orchestrator\n");
-        sb.append("    ├─▶ If orchestratorCollectorRequest → Orchestrator Collector\n");
-        sb.append("    └─▶ If reviewRequest/mergerRequest → Review/Merger\n");
-        sb.append("    ▼\n");
-
-        // Ticket phase
-        sb.append(nodeDisplay("Ticket Orchestrator", AgentModels.TicketOrchestratorRequest.class, currentRequestType, visitedTypes));
-        sb.append("\n    │ (returns TicketOrchestratorRouting)\n");
-        sb.append("    ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)\n");
-        sb.append("    ├─▶ If agentRequests → Ticket Agents (dispatch)\n");
-        sb.append("    └─▶ If collectorRequest → Ticket Collector\n");
-        sb.append("    ▼\n");
-
-        sb.append(nodeDisplay("Ticket Agents", AgentModels.TicketAgentRequests.class, currentRequestType, visitedTypes));
-        sb.append("\n    │ (each agent returns TicketAgentRouting)\n");
-        sb.append("    ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)\n");
-        sb.append("    └─▶ If agentResult → Ticket results\n");
-        sb.append("    ▼\n");
-
-        sb.append(nodeDisplay("Ticket Collector", AgentModels.TicketCollectorRequest.class, currentRequestType, visitedTypes));
-        sb.append("\n    │ (returns TicketCollectorRouting)\n");
-        sb.append("    ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)\n");
-        sb.append("    ├─▶ If collectorResult → handleTicketCollectorBranch\n");
-        sb.append("    │     ├─▶ ticketRequest (ROUTE_BACK)\n");
-        sb.append("    │     └─▶ orchestratorCollectorRequest (ADVANCE_PHASE)\n");
-        sb.append("    ├─▶ If ticketRequest → Ticket Orchestrator\n");
-        sb.append("    ├─▶ If orchestratorCollectorRequest → Orchestrator Collector\n");
-        sb.append("    └─▶ If reviewRequest/mergerRequest → Review/Merger\n");
-        sb.append("    ▼\n");
-
-        // Final collector
-        sb.append(nodeDisplay("Orchestrator Collector", AgentModels.OrchestratorCollectorRequest.class, currentRequestType, visitedTypes));
-        sb.append("\n    │ (returns OrchestratorCollectorRouting)\n");
-        sb.append("    ├─▶ If interruptRequest → Interrupt (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP)\n");
-        sb.append("    ├─▶ If collectorResult → handleOrchestratorCollectorBranch\n");
-        sb.append("    │     ├─▶ orchestratorRequest (ROUTE_BACK)\n");
-        sb.append("    │     └─▶ COMPLETE (ADVANCE_PHASE)\n");
-        sb.append("    ├─▶ If orchestratorRequest → Orchestrator\n");
-        sb.append("    ├─▶ If discoveryRequest → Discovery Orchestrator\n");
-        sb.append("    ├─▶ If planningRequest → Planning Orchestrator\n");
-        sb.append("    ├─▶ If ticketRequest → Ticket Orchestrator\n");
-        sb.append("    └─▶ If reviewRequest/mergerRequest → Review/Merger\n");
-        sb.append("    ▼\n");
-        sb.append("  COMPLETE\n");
-
-        sb.append("```\n");
-
-        return sb.toString();
+        return args;
     }
 
     /**
-     * Format a node for display, marking current position and visited nodes
+     * Render template by substituting placeholders with values.
+     */
+    private String render(String template, Map<String, Object> args) {
+        String rendered = template;
+        for (Map.Entry<String, Object> entry : args.entrySet()) {
+            String placeholder = "\\{\\{\\s*" + Pattern.quote(entry.getKey()) + "\\s*\\}\\}";
+            String value = entry.getValue() != null ? entry.getValue().toString() : "";
+            rendered = rendered.replaceAll(placeholder, Matcher.quoteReplacement(value));
+        }
+        return rendered;
+    }
+
+    /**
+     * Format a node for display, marking current position and visited nodes.
      */
     private String nodeDisplay(String name, Class<?> nodeType, Class<?> currentType, List<Class<?>> visited) {
         StringBuilder sb = new StringBuilder();
@@ -217,7 +709,7 @@ public class WeAreHerePromptContributor implements PromptContributor {
     }
 
     /**
-     * Get the list of request types that have been visited based on blackboard history
+     * Get the list of request types that have been visited based on blackboard history.
      */
     private List<Class<?>> getVisitedTypes(PromptContext context) {
         List<Class<?>> visited = new ArrayList<>();
@@ -242,11 +734,10 @@ public class WeAreHerePromptContributor implements PromptContributor {
     }
 
     /**
-     * Build a summary of the execution history
+     * Build a summary of the execution history.
      */
     private String buildExecutionHistory(PromptContext context) {
         StringBuilder sb = new StringBuilder();
-        sb.append("### Execution History\n\n");
 
         if (context.blackboardHistory() == null || context.blackboardHistory().copyOfEntries().isEmpty()) {
             sb.append("_No prior actions in this workflow run._\n");
@@ -295,11 +786,10 @@ public class WeAreHerePromptContributor implements PromptContributor {
     }
 
     /**
-     * Build a description of available routing options for the current position
+     * Build a description of available routing options for the current position.
      */
     private String buildRoutingOptions(PromptContext context) {
         StringBuilder sb = new StringBuilder();
-        sb.append("### Available Routing Options\n\n");
 
         if (context.currentRequest() == null) {
             sb.append("_No request context available._\n");
@@ -334,327 +824,9 @@ public class WeAreHerePromptContributor implements PromptContributor {
     }
 
     /**
-     * Provide contextual guidance based on the current request type
+     * Provide contextual guidance based on the current request type.
      */
     private String getContextualGuidance(Class<?> requestType) {
-        if (requestType.equals(AgentModels.OrchestratorRequest.class)) {
-            return """
-                **Guidance:** You must return an `OrchestratorRouting` with exactly ONE field set.
-
-                **Routing options:**
-                - `interruptRequest` - Pause or stop execution per interrupt request
-                - `collectorRequest` - Route to Orchestrator Collector (final consolidation)
-                - `orchestratorRequest` - Route to Discovery Orchestrator
-                - `contextManagerRequest` - Route to Context Manager for context reconstruction
-
-                **Happy path:** For a new workflow, set `orchestratorRequest` to start discovery.
-                Only set `collectorRequest` when ALL workflow phases are complete.
-                """  + interruptGuidance() + contextManagerGuidance();
-        }
-
-        if (requestType.equals(AgentModels.DiscoveryOrchestratorRequest.class)) {
-            return """
-                **Guidance:** You must return a `DiscoveryOrchestratorRouting` with exactly ONE field set.
-
-                **Routing options:**
-                - `interruptRequest` - Pause or stop execution per interrupt request
-                - `agentRequests` - Delegate to multiple discovery agents (contains list of DiscoveryAgentRequest)
-                - `collectorRequest` - Route to Discovery Collector to consolidate results
-                - `contextManagerRequest` - Route to Context Manager for context reconstruction
-
-                **Happy path:** Set `agentRequests` to dispatch discovery work, then later set
-                `collectorRequest` when agents have gathered sufficient information.
-                """  + interruptGuidance() + contextManagerGuidance();
-        }
-
-        if (requestType.equals(AgentModels.DiscoveryCollectorRequest.class)) {
-            return """
-                **Guidance:** You must return a `DiscoveryCollectorRouting` with exactly ONE field set.
-
-                **Two routing options:**
-
-                1. **Direct routing** - Set one of these fields directly:
-                   - `discoveryRequest` - Route back to Discovery Orchestrator
-                   - `planningRequest` - Route to Planning Orchestrator
-                   - `orchestratorRequest` - Route to main Orchestrator
-                   - `reviewRequest` / `mergerRequest` - Route to review/merge
-                   - `contextManagerRequest` - Route to Context Manager for context reconstruction
-
-                2. **Branching routing** - Set `collectorResult` with a `DiscoveryCollectorResult`:
-                   - The `collectorResult` contains a `CollectorDecision` with `decisionType`
-                   - Framework calls `handleDiscoveryCollectorBranch` which interprets the decision
-                   - ADVANCE_PHASE → handler sets `planningRequest`
-                   - ROUTE_BACK → handler sets `discoveryRequest`
-
-                **Most common:** Use option 2 (set `collectorResult`) for standard flow control.
-                """  + interruptGuidance() + contextManagerGuidance();
-        }
-
-        if (requestType.equals(AgentModels.PlanningOrchestratorRequest.class)) {
-            return """
-                **Guidance:** You must return a `PlanningOrchestratorRouting` with exactly ONE field set.
-
-                **Routing options:**
-                - `interruptRequest` - Pause or stop execution per interrupt request
-                - `agentRequests` - Delegate to multiple planning agents (contains list of PlanningAgentRequest)
-                - `collectorRequest` - Route to Planning Collector to consolidate results
-                - `contextManagerRequest` - Route to Context Manager for context reconstruction
-
-                **Happy path:** Set `agentRequests` to dispatch planning work, then later set
-                `collectorRequest` when planning is complete.
-                """  + interruptGuidance() + contextManagerGuidance();
-        }
-
-        if (requestType.equals(AgentModels.PlanningCollectorRequest.class)) {
-            return """
-                **Guidance:** You must return a `PlanningCollectorRouting` with exactly ONE field set.
-
-                **Two routing options:**
-
-                1. **Direct routing** - Set one of these fields directly:
-                   - `planningRequest` - Route back to Planning Orchestrator
-                   - `ticketOrchestratorRequest` - Route to Ticket Orchestrator
-                   - `discoveryOrchestratorRequest` - Route to Discovery Orchestrator
-                   - `orchestratorCollectorRequest` - Route to Orchestrator Collector
-                   - `reviewRequest` / `mergerRequest` - Route to review/merge
-                   - `contextManagerRequest` - Route to Context Manager for context reconstruction
-
-                2. **Branching routing** - Set `collectorResult` with a `PlanningCollectorResult`:
-                   - The `collectorResult` contains a `CollectorDecision` with `decisionType`
-                   - Framework calls `handlePlanningCollectorBranch` which interprets the decision
-                   - ADVANCE_PHASE → handler sets `ticketOrchestratorRequest`
-                   - ROUTE_BACK → handler sets `planningRequest`
-
-                **Most common:** Use option 2 (set `collectorResult`) for standard flow control.
-                """  + interruptGuidance() + contextManagerGuidance();
-        }
-
-        if (requestType.equals(AgentModels.TicketOrchestratorRequest.class)) {
-            return """
-                **Guidance:** You must return a `TicketOrchestratorRouting` with exactly ONE field set.
-
-                **Routing options:**
-                - `interruptRequest` - Pause or stop execution per interrupt request
-                - `agentRequests` - Delegate to multiple ticket agents (contains list of TicketAgentRequest)
-                - `collectorRequest` - Route to Ticket Collector to consolidate results
-                - `contextManagerRequest` - Route to Context Manager for context reconstruction
-
-                **Happy path:** Set `agentRequests` to dispatch ticket execution work, then later set
-                `collectorRequest` when implementation is complete.
-                """  + interruptGuidance() + contextManagerGuidance();
-        }
-
-        if (requestType.equals(AgentModels.TicketCollectorRequest.class)) {
-            return """
-                **Guidance:** You must return a `TicketCollectorRouting` with exactly ONE field set.
-
-                **Two routing options:**
-
-                1. **Direct routing** - Set one of these fields directly:
-                   - `ticketRequest` - Route back to Ticket Orchestrator
-                   - `orchestratorCollectorRequest` - Route to Orchestrator Collector
-                   - `reviewRequest` / `mergerRequest` - Route to review/merge
-                   - `contextManagerRequest` - Route to Context Manager for context reconstruction
-
-                2. **Branching routing** - Set `collectorResult` with a `TicketCollectorResult`:
-                   - The `collectorResult` contains a `CollectorDecision` with `decisionType`
-                   - Framework calls `handleTicketCollectorBranch` which interprets the decision
-                   - ADVANCE_PHASE → handler sets `orchestratorCollectorRequest`
-                   - ROUTE_BACK → handler sets `ticketRequest`
-
-                **Most common:** Use option 2 (set `collectorResult`) for standard flow control.
-                """  + interruptGuidance() + contextManagerGuidance();
-        }
-
-        if (requestType.equals(AgentModels.OrchestratorCollectorRequest.class)) {
-            return """
-                **Guidance:** You must return an `OrchestratorCollectorRouting` with exactly ONE field set.
-
-                **Two routing options:**
-
-                1. **Direct routing** - Set one of these fields directly:
-                   - `orchestratorRequest` - Route back to Orchestrator
-                   - `discoveryRequest` - Route to Discovery Orchestrator
-                   - `planningRequest` - Route to Planning Orchestrator
-                   - `ticketRequest` - Route to Ticket Orchestrator
-                   - `reviewRequest` / `mergerRequest` - Route to review/merge
-                   - `contextManagerRequest` - Route to Context Manager for context reconstruction
-
-                2. **Branching routing** - Set `collectorResult` with an `OrchestratorCollectorResult`:
-                   - The `collectorResult` contains a `CollectorDecision` with `decisionType`
-                   - Framework calls `handleOrchestratorCollectorBranch` which interprets the decision
-                   - ADVANCE_PHASE → workflow complete (requestedPhase="COMPLETE")
-                   - ROUTE_BACK → restart at specific phase
-
-                **Most common:** Use option 2 with ADVANCE_PHASE for workflow completion.
-                """  + interruptGuidance() + contextManagerGuidance();
-        }
-
-        // Discovery Agent
-        if (requestType.equals(AgentModels.DiscoveryAgentRequest.class)) {
-            return """
-                **Guidance:** You must return a `DiscoveryAgentRouting` with exactly ONE field set.
-
-                **Routing options:**
-                - `interruptRequest` - Pause or stop execution per interrupt request
-                - `agentResult` - Return discovery findings (contains DiscoveryReport)
-                - `planningOrchestratorRequest` - Bypass to Planning Orchestrator (rare)
-                - `contextManagerRequest` - Route to Context Manager for context reconstruction
-
-                **Happy path:** Set `agentResult` with your discovery findings.
-                """  + interruptGuidance() + contextManagerGuidance();
-        }
-
-        // Planning Agent
-        if (requestType.equals(AgentModels.PlanningAgentRequest.class)) {
-            return """
-                **Guidance:** You must return a `PlanningAgentRouting` with exactly ONE field set.
-
-                **Routing options:**
-                - `interruptRequest` - Pause or stop execution per interrupt request
-                - `agentResult` - Return planning results (contains tickets)
-                - `contextManagerRequest` - Route to Context Manager for context reconstruction
-
-                **Happy path:** Set `agentResult` with your planning tickets.
-                """  + interruptGuidance() + contextManagerGuidance();
-        }
-
-        // Ticket Agent
-        if (requestType.equals(AgentModels.TicketAgentRequest.class)) {
-            return """
-                **Guidance:** You must return a `TicketAgentRouting` with exactly ONE field set.
-
-                **Routing options:**
-                - `interruptRequest` - Pause or stop execution per interrupt request
-                - `agentResult` - Return ticket execution results (files modified, tests, commits)
-                - `contextManagerRequest` - Route to Context Manager for context reconstruction
-
-                **Happy path:** Set `agentResult` with your implementation results.
-                """  + interruptGuidance() + contextManagerGuidance();
-        }
-
-        if (requestType.equals(AgentModels.DiscoveryAgentResults.class)) {
-            return """
-                **Guidance:** You must return a `DiscoveryAgentDispatchRouting` with exactly ONE field set.
-
-                **Routing options:**
-                - `interruptRequest` - Pause or stop execution per interrupt request
-                - `collectorRequest` - Route to Discovery Collector
-                - `contextManagerRequest` - Route to Context Manager for context reconstruction
-
-                **Happy path:** Set `collectorRequest` to consolidate discovery results.
-                """  + interruptGuidance() + contextManagerGuidance();
-        }
-
-        if (requestType.equals(AgentModels.PlanningAgentResults.class)) {
-            return """
-                **Guidance:** You must return a `PlanningAgentDispatchRouting` with exactly ONE field set.
-
-                **Routing options:**
-                - `interruptRequest` - Pause or stop execution per interrupt request
-                - `planningCollectorRequest` - Route to Planning Collector
-                - `contextManagerRequest` - Route to Context Manager for context reconstruction
-
-                **Happy path:** Set `planningCollectorRequest` to consolidate planning results.
-                """  + interruptGuidance() + contextManagerGuidance();
-        }
-
-        if (requestType.equals(AgentModels.TicketAgentResults.class)) {
-            return """
-                **Guidance:** You must return a `TicketAgentDispatchRouting` with exactly ONE field set.
-
-                **Routing options:**
-                - `interruptRequest` - Pause or stop execution per interrupt request
-                - `ticketCollectorRequest` - Route to Ticket Collector
-                - `contextManagerRequest` - Route to Context Manager for context reconstruction
-
-                **Happy path:** Set `ticketCollectorRequest` to consolidate ticket results.
-                """  + interruptGuidance() + contextManagerGuidance();
-        }
-
-        if (requestType.equals(AgentModels.ContextManagerRoutingRequest.class)) {
-            return """
-                **Guidance:** You must return a `ContextManagerRequest` assembled by the routing action.
-
-                **Routing options:**
-                - `reason` - Explain why context reconstruction is needed
-                - `type` - Choose the reconstruction type (INTROSPECT_AGENT_CONTEXT or PROCEED)
-
-                **Happy path:** Provide a concise reason and pick the most appropriate type.
-                """;
-        }
-
-        if (requestType.equals(AgentModels.ContextManagerRequest.class)) {
-            return """
-                **Guidance:** You must return a `ContextManagerResultRouting` with exactly ONE field set.
-
-                **Routing options:**
-                - `interruptRequest` - Pause or stop execution per interrupt request
-                - `orchestratorRequest` - Route to Orchestrator
-                - `orchestratorCollectorRequest` - Route to Orchestrator Collector
-                - `discoveryOrchestratorRequest` - Route to Discovery Orchestrator
-                - `discoveryCollectorRequest` - Route to Discovery Collector
-                - `planningOrchestratorRequest` - Route to Planning Orchestrator
-                - `planningCollectorRequest` - Route to Planning Collector
-                - `ticketOrchestratorRequest` - Route to Ticket Orchestrator
-                - `ticketCollectorRequest` - Route to Ticket Collector
-                - `reviewRequest` - Route to Review Agent
-                - `mergerRequest` - Route to Merger Agent
-                - `planningAgentRequest` - Route to Planning Agent
-                - `planningAgentRequests` - Route to Planning Agent dispatch
-                - `planningAgentResults` - Route to Planning Agent results
-                - `ticketAgentRequest` - Route to Ticket Agent
-                - `ticketAgentRequests` - Route to Ticket Agent dispatch
-                - `ticketAgentResults` - Route to Ticket Agent results
-                - `discoveryAgentRequest` - Route to Discovery Agent
-                - `discoveryAgentRequests` - Route to Discovery Agent dispatch
-                - `discoveryAgentResults` - Route to Discovery Agent results
-                - `contextOrchestratorRequest` - Route to Context Orchestrator
-
-                **Available return routes in this request (may be null):**
-                - `returnToOrchestrator`
-                - `returnToOrchestratorCollector`
-                - `returnToDiscoveryOrchestrator`
-                - `returnToDiscoveryCollector`
-                - `returnToPlanningOrchestrator`
-                - `returnToPlanningCollector`
-                - `returnToTicketOrchestrator`
-                - `returnToTicketCollector`
-                - `returnToReview`
-                - `returnToMerger`
-                - `returnToPlanningAgent`
-                - `returnToPlanningAgentRequests`
-                - `returnToPlanningAgentResults`
-                - `returnToTicketAgent`
-                - `returnToTicketAgentRequests`
-                - `returnToTicketAgentResults`
-                - `returnToDiscoveryAgent`
-                - `returnToDiscoveryAgentRequests`
-                - `returnToDiscoveryAgentResults`
-                - `returnToContextOrchestrator`
-
-                **Constraint:** Exactly one `returnTo*` field should be non-null in any ContextManagerRequest.
-
-                **Happy path:** Route to the agent that can most directly act on the reconstructed context.
-                """  + interruptGuidance();
-        }
-
-        return "";
-    }
-
-    private String interruptGuidance() {
-        return """
-
-                **Interrupt guidance:** If uncertain, emit an `interruptRequest`. You may emit interrupts multiple times if more context is needed.
-                Include `reason`, `contextForDecision`, `choices`, `confirmationItems`, and the agent-specific interrupt context fields.
-                """;
-    }
-
-    private String contextManagerGuidance() {
-        return """
-
-                **Context guidance:** To request context reconstruction, set `contextManagerRequest`
-                with a `ContextManagerRoutingRequest` (provide `reason` and `type`).
-                """;
+        return GUIDANCE_TEMPLATES.getOrDefault(requestType, "");
     }
 }
