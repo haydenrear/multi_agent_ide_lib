@@ -1,5 +1,6 @@
 package com.hayden.multiagentidelib.prompt;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hayden.multiagentidelib.agent.AgentType;
 import com.hayden.utilitymodule.acp.events.Artifact;
 import com.hayden.utilitymodule.acp.events.ArtifactHashing;
@@ -11,7 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-public interface PromptContributor extends Templated {
+public interface PromptContributor {
 
     String name();
 
@@ -27,43 +28,28 @@ public interface PromptContributor extends Templated {
 
     int priority();
 
-    @Override
     default String templateStaticId() {
         return name();
     }
 
-    @Override
     default String templateText() {
         return template();
     }
 
-    @Override
+    @JsonIgnore
     default Optional<String> contentHash() {
         String text = templateText();
         return text == null ? Optional.empty() : Optional.of(ArtifactHashing.hashText(text));
     }
 
-    @Override
-    default ArtifactKey templateArtifactKey() {
-        return ArtifactKey.createRoot();
-    }
-
-    @Override
-    default ArtifactKey artifactKey() {
-        return templateArtifactKey();
-    }
-
-    @Override
     default String artifactType() {
         return "PromptContributionTemplate";
     }
 
-    @Override
     default Map<String, String> metadata() {
         return Map.of();
     }
 
-    @Override
     default List<Artifact> children() {
         return List.of();
     }

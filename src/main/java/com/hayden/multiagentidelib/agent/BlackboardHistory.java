@@ -34,23 +34,6 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
     private volatile History history;
 
     /**
-     * Functional interface for providing contextual prompts based on history.
-     * Implementations can augment base prompts with retry/loop information.
-     */
-    @FunctionalInterface
-    public interface PromptProvider {
-        String providePrompt(String basePrompt);
-
-        static PromptProvider identity() {
-            return basePrompt -> basePrompt;
-        }
-
-        default PromptProvider andThen(PromptProvider after) {
-            return basePrompt -> after.providePrompt(this.providePrompt(basePrompt));
-        }
-    }
-
-    /**
      * Tracks a single historical blackboard state entry.
      * Each entry represents a previous action's input that has been archived.
      */
@@ -117,25 +100,12 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
 
     public synchronized String summary() {
         return Optional.ofNullable(history)
-                .flatMap(h -> Optional.ofNullable(h.getSummary()))
+                .flatMap(h -> Optional.of(h.getSummary()))
                 .orElse(null);
     }
 
     public static BlackboardHistory getEntireBlackboardHistory(Blackboard context) {
         return context.last(BlackboardHistory.class);
-    }
-
-    private static History getBlackboardHistory(OperationContext context) {
-        if (context == null) {
-            return null;
-        }
-
-        var b = context.last(BlackboardHistory.class);
-
-        if (b == null)
-            return null;
-
-        return b.history();
     }
 
     public static <T> T getLastFromHistory(Blackboard context, Class<T> inputType) {
@@ -146,30 +116,6 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
         }
 
         return history.getLastOfType(inputType);
-    }
-
-    public static <T> T findSecondToLastFromHistory(BlackboardHistory history, Class<T> type) {
-        if (history == null || type == null) {
-            return null;
-        }
-        List<BlackboardHistory.Entry> entries = history.copyOfEntries();
-        int numFound = 0;
-        for (int i = entries.size() - 1; i >= 0; i--) {
-            BlackboardHistory.Entry entry = entries.get(i);
-            if (entry == null) {
-                continue;
-            }
-            Object input = entry.input();
-            if (!(input instanceof Artifact.AgentModel model)) {
-                continue;
-            }
-            if (type.isInstance(model) && numFound == 1) {
-                return (T) model;
-            } else if (type.isInstance(model)) {
-                numFound += 1;
-            }
-        }
-        return null;
     }
 
     public static void setLoopThreshold(int threshold) {

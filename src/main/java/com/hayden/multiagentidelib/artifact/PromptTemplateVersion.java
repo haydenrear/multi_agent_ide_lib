@@ -75,8 +75,7 @@ public record PromptTemplateVersion(
             String templateText,
             String contentHash,
             ArtifactKey templateArtifactKey,
-            Instant lastUpdatedAt,
-            String sourceLocation
+            Instant lastUpdatedAt
     ) {
         return new PromptTemplateVersion(
                 templateStaticId,

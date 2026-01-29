@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 public class RequestEnrichment {
 
     private final ContextIdService contextIdService;
+
     private final PreviousContextFactory previousContextFactory;
 
     public RequestEnrichment(ContextIdService contextIdService) {
@@ -36,17 +37,17 @@ public class RequestEnrichment {
         if (input == null) {
             return null;
         }
-        if (!(input instanceof Artifact.AgentModel modelInput)) {
-            return input;
-        }
-        if (input instanceof AgentModels.AgentRequest request && request.contextId() != null) {
-            return input;
-        }
+
         BlackboardHistory history = null;
-        if (context != null && context.getAgentProcess() != null && context.getAgentProcess().getBlackboard() != null) {
+
+        if (context != null) {
             history = context.getAgentProcess().getBlackboard().last(BlackboardHistory.class);
         }
-        Artifact.AgentModel parent = findParentForInput(modelInput, history);
+
+        if (input.key() != null)
+            log.error("Found input without key.");
+
+        Artifact.AgentModel parent = findParentForInput(input, history);
         return enrich(input, context, parent);
     }
 
@@ -162,10 +163,6 @@ public class RequestEnrichment {
                     findLastFromHistory(history, AgentModels.AgentRequest.class, AgentModels.AgentResult.class);
             default -> findLastFromHistory(history, Artifact.AgentModel.class);
         };
-    }
-
-    private <T extends Artifact.AgentModel> T findSecondToLastFromHistory(BlackboardHistory history, Class<T> types) {
-        return BlackboardHistory.findSecondToLastFromHistory(history, types);
     }
 
     private Artifact.AgentModel findLastFromHistory(BlackboardHistory history, Class<?>... types) {
