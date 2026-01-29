@@ -118,12 +118,15 @@ public sealed interface PreviousContext extends AgentContext permits
         if (upstreamContext == null) {
             return;
         }
+
         String value = switch (upstreamContext) {
             case UpstreamContext.DiscoveryCollectorContext discovery -> discovery.prettyPrint();
             case UpstreamContext.PlanningCollectorContext planning -> planning.prettyPrint();
             case UpstreamContext.TicketCollectorContext ticket -> ticket.prettyPrint();
-            default -> throw new RuntimeException("Found undesired!");
+            default -> throw new RuntimeException("Found undesired upstream context - %s!"
+                    .formatted(upstreamContext.getClass().getSimpleName()));
         };
+
         appendSection(builder, label, value);
     }
 

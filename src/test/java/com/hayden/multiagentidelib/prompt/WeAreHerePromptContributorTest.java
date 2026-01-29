@@ -36,29 +36,6 @@ class WeAreHerePromptContributorTest {
         assertThat(contributor.priority()).isEqualTo(90);
     }
 
-    @Test
-    @DisplayName("should apply to all workflow agent types")
-    void shouldApplyToWorkflowAgents() {
-        var applicableAgents = contributor.applicableAgents();
-        
-        assertThat(applicableAgents).contains(
-                AgentType.ORCHESTRATOR,
-                AgentType.ORCHESTRATOR_COLLECTOR,
-                AgentType.DISCOVERY_ORCHESTRATOR,
-                AgentType.DISCOVERY_AGENT_DISPATCH,
-                AgentType.DISCOVERY_COLLECTOR,
-                AgentType.PLANNING_ORCHESTRATOR,
-                AgentType.PLANNING_AGENT_DISPATCH,
-                AgentType.PLANNING_COLLECTOR,
-                AgentType.TICKET_ORCHESTRATOR,
-                AgentType.TICKET_AGENT_DISPATCH,
-                AgentType.TICKET_COLLECTOR,
-                AgentType.REVIEW_AGENT,
-                AgentType.MERGER_AGENT,
-                AgentType.CONTEXT_MANAGER
-        );
-    }
-
     @Nested
     @DisplayName("Orchestrator Request")
     class OrchestratorRequestTests {

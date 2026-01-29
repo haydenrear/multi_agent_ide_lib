@@ -8,7 +8,21 @@ import com.hayden.utilitymodule.acp.events.ArtifactKey;
 import java.util.ArrayList;
 import java.util.List;
 
-public sealed interface UpstreamContext extends AgentContext permits UpstreamContext.DiscoveryAgentUpstreamContext, UpstreamContext.DiscoveryCollectorContext, UpstreamContext.DiscoveryOrchestratorUpstreamContext, UpstreamContext.MergerUpstreamContext, UpstreamContext.OrchestratorCollectorUpstreamContext, UpstreamContext.OrchestratorUpstreamContext, UpstreamContext.PlanningAgentUpstreamContext, UpstreamContext.PlanningCollectorContext, UpstreamContext.PlanningOrchestratorUpstreamContext, UpstreamContext.ReviewUpstreamContext, UpstreamContext.TicketAgentUpstreamContext, UpstreamContext.TicketCollectorContext, UpstreamContext.TicketOrchestratorUpstreamContext {
+public sealed interface UpstreamContext extends AgentContext
+        permits
+            UpstreamContext.DiscoveryAgentUpstreamContext,
+            UpstreamContext.DiscoveryCollectorContext,
+            UpstreamContext.DiscoveryOrchestratorUpstreamContext,
+            UpstreamContext.MergerUpstreamContext,
+            UpstreamContext.OrchestratorCollectorUpstreamContext,
+            UpstreamContext.OrchestratorUpstreamContext,
+            UpstreamContext.PlanningAgentUpstreamContext,
+            UpstreamContext.PlanningCollectorContext,
+            UpstreamContext.PlanningOrchestratorUpstreamContext,
+            UpstreamContext.ReviewUpstreamContext,
+            UpstreamContext.TicketAgentUpstreamContext,
+            UpstreamContext.TicketCollectorContext,
+            UpstreamContext.TicketOrchestratorUpstreamContext {
 
     ArtifactKey artifactKey();
 

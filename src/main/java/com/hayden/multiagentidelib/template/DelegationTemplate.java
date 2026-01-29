@@ -3,24 +3,15 @@ package com.hayden.multiagentidelib.template;
 import com.hayden.multiagentidelib.agent.AgentType;
 import com.hayden.utilitymodule.acp.events.ArtifactKey;
 
-import java.util.List;
 import java.util.Map;
 
 public interface DelegationTemplate {
 
-    String schemaVersion();
-
-    ArtifactKey resultId();
-
-    ArtifactKey upstreamArtifactKey();
+    ArtifactKey contextId();
 
     String goal();
 
     String delegationRationale();
-
-    List<AgentAssignment> assignments();
-
-    List<ContextSelection> contextSelections();
 
     Map<String, String> metadata();
 

@@ -57,7 +57,7 @@ public class RequestEnrichment {
 
         return switch (input) {
             case AgentModels.OrchestratorRequest ignored ->
-                    findSecondToLastFromHistory(history,
+                    findLastFromHistory(history,
                             AgentModels.OrchestratorRequest.class);
             case AgentModels.OrchestratorCollectorRequest ignored ->
                     findLastFromHistory(history,
@@ -122,41 +122,41 @@ public class RequestEnrichment {
                             AgentModels.AgentResult.class);
             case AgentModels.ContextManagerRoutingRequest ignored ->
                     findLastFromHistory(history, AgentModels.AgentRequest.class, AgentModels.AgentResult.class);
-            case AgentModels.OrchestratorInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.OrchestratorInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.OrchestratorRequest.class);
-            case AgentModels.OrchestratorCollectorInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.OrchestratorCollectorInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.OrchestratorCollectorRequest.class);
-            case AgentModels.DiscoveryOrchestratorInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.DiscoveryOrchestratorInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.DiscoveryOrchestratorRequest.class);
-            case AgentModels.DiscoveryAgentInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.DiscoveryAgentInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.DiscoveryAgentRequest.class);
-            case AgentModels.DiscoveryCollectorInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.DiscoveryCollectorInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.DiscoveryCollectorRequest.class);
-            case AgentModels.DiscoveryAgentDispatchInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.DiscoveryAgentDispatchInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.DiscoveryAgentRequests.class);
-            case AgentModels.PlanningOrchestratorInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.PlanningOrchestratorInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.PlanningOrchestratorRequest.class);
-            case AgentModels.PlanningAgentInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.PlanningAgentInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.PlanningAgentRequest.class);
-            case AgentModels.PlanningCollectorInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.PlanningCollectorInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.PlanningCollectorRequest.class);
-            case AgentModels.PlanningAgentDispatchInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.PlanningAgentDispatchInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.PlanningAgentRequests.class);
-            case AgentModels.TicketOrchestratorInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.TicketOrchestratorInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.TicketOrchestratorRequest.class);
-            case AgentModels.TicketAgentInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.TicketAgentInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.TicketAgentRequest.class);
-            case AgentModels.TicketCollectorInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.TicketCollectorInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.TicketCollectorRequest.class);
-            case AgentModels.TicketAgentDispatchInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.TicketAgentDispatchInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.TicketAgentRequests.class);
-            case AgentModels.ReviewInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.ReviewInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.ReviewRequest.class);
-            case AgentModels.MergerInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.MergerInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.MergerRequest.class);
-            case AgentModels.ContextManagerInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.ContextManagerInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.ContextManagerRequest.class);
-            case AgentModels.QuestionAnswerInterruptRequest ignored ->
+            case AgentModels.InterruptRequest.QuestionAnswerInterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.ContextManagerRequest.class);
             case AgentModels.InterruptRequest ignored ->
                     findLastFromHistory(history, AgentModels.AgentRequest.class, AgentModels.AgentResult.class);
@@ -164,30 +164,8 @@ public class RequestEnrichment {
         };
     }
 
-    private Artifact.AgentModel findSecondToLastFromHistory(BlackboardHistory history, Class<?>... types) {
-        if (history == null || types == null || types.length == 0) {
-            return null;
-        }
-        List<BlackboardHistory.Entry> entries = history.copyOfEntries();
-        int numFound = 0;
-        for (int i = entries.size() - 1; i >= 0; i--) {
-            BlackboardHistory.Entry entry = entries.get(i);
-            if (entry == null) {
-                continue;
-            }
-            Object input = entry.input();
-            if (!(input instanceof Artifact.AgentModel model)) {
-                continue;
-            }
-            for (Class<?> type : types) {
-                if (type != null && type.isInstance(model) && numFound == 1) {
-                    return model;
-                } else if (type != null && type.isInstance(model)) {
-                    numFound += 1;
-                }
-            }
-        }
-        return null;
+    private <T extends Artifact.AgentModel> T findSecondToLastFromHistory(BlackboardHistory history, Class<T> types) {
+        return BlackboardHistory.findSecondToLastFromHistory(history, types);
     }
 
     private Artifact.AgentModel findLastFromHistory(BlackboardHistory history, Class<?>... types) {
@@ -287,38 +265,38 @@ public class RequestEnrichment {
             return null;
         }
         return switch (req) {
-            case AgentModels.OrchestratorInterruptRequest r ->
+            case AgentModels.InterruptRequest.OrchestratorInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.ORCHESTRATOR, parent)).build();
-            case AgentModels.OrchestratorCollectorInterruptRequest r ->
+            case AgentModels.InterruptRequest.OrchestratorCollectorInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.ORCHESTRATOR_COLLECTOR, parent)).build();
-            case AgentModels.DiscoveryOrchestratorInterruptRequest r ->
+            case AgentModels.InterruptRequest.DiscoveryOrchestratorInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.DISCOVERY_ORCHESTRATOR, parent)).build();
-            case AgentModels.DiscoveryAgentInterruptRequest r ->
+            case AgentModels.InterruptRequest.DiscoveryAgentInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.DISCOVERY_AGENT, parent)).build();
-            case AgentModels.DiscoveryCollectorInterruptRequest r ->
+            case AgentModels.InterruptRequest.DiscoveryCollectorInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.DISCOVERY_COLLECTOR, parent)).build();
-            case AgentModels.DiscoveryAgentDispatchInterruptRequest r ->
+            case AgentModels.InterruptRequest.DiscoveryAgentDispatchInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.DISCOVERY_AGENT_DISPATCH, parent)).build();
-            case AgentModels.PlanningOrchestratorInterruptRequest r ->
+            case AgentModels.InterruptRequest.PlanningOrchestratorInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.PLANNING_ORCHESTRATOR, parent)).build();
-            case AgentModels.PlanningAgentInterruptRequest r ->
+            case AgentModels.InterruptRequest.PlanningAgentInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.PLANNING_AGENT, parent)).build();
-            case AgentModels.PlanningCollectorInterruptRequest r ->
+            case AgentModels.InterruptRequest.PlanningCollectorInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.PLANNING_COLLECTOR, parent)).build();
-            case AgentModels.PlanningAgentDispatchInterruptRequest r ->
+            case AgentModels.InterruptRequest.PlanningAgentDispatchInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.PLANNING_AGENT_DISPATCH, parent)).build();
-            case AgentModels.TicketOrchestratorInterruptRequest r ->
+            case AgentModels.InterruptRequest.TicketOrchestratorInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.TICKET_ORCHESTRATOR, parent)).build();
-            case AgentModels.TicketAgentInterruptRequest r ->
+            case AgentModels.InterruptRequest.TicketAgentInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.TICKET_AGENT, parent)).build();
-            case AgentModels.TicketCollectorInterruptRequest r ->
+            case AgentModels.InterruptRequest.TicketCollectorInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.TICKET_COLLECTOR, parent)).build();
-            case AgentModels.TicketAgentDispatchInterruptRequest r ->
+            case AgentModels.InterruptRequest.TicketAgentDispatchInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.TICKET_AGENT_DISPATCH, parent)).build();
-            case AgentModels.ReviewInterruptRequest r ->
+            case AgentModels.InterruptRequest.ReviewInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.REVIEW_AGENT, parent)).build();
-            case AgentModels.MergerInterruptRequest r ->
-                    new AgentModels.MergerInterruptRequest(
+            case AgentModels.InterruptRequest.MergerInterruptRequest r ->
+                    new AgentModels.InterruptRequest.MergerInterruptRequest(
                             resolveContextId(context, AgentType.MERGER_AGENT, parent),
                             r.type(),
                             r.reason(),
@@ -329,9 +307,9 @@ public class RequestEnrichment {
                             r.resolutionStrategies(),
                             r.mergeApproach()
                     );
-            case AgentModels.ContextManagerInterruptRequest r ->
+            case AgentModels.InterruptRequest.ContextManagerInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.CONTEXT_MANAGER, parent)).build();
-            case AgentModels.QuestionAnswerInterruptRequest r ->
+            case AgentModels.InterruptRequest.QuestionAnswerInterruptRequest r ->
                     r.toBuilder().contextId(resolveContextId(context, AgentType.CONTEXT_MANAGER, parent)).build();
         };
     }
@@ -517,7 +495,7 @@ public class RequestEnrichment {
     private AgentModels.DiscoveryAgentRequests enrichDiscoveryAgentRequests(
             AgentModels.DiscoveryAgentRequests req, OperationContext context, Artifact.AgentModel parent) {
         AgentModels.DiscoveryAgentRequests built = req.toBuilder()
-                .resultId(resolveContextId(context, AgentType.DISCOVERY_AGENT_DISPATCH, parent))
+                .contextId(resolveContextId(context, AgentType.DISCOVERY_AGENT_DISPATCH, parent))
                 .build();
         return built
                 .withChildren(enrichChildren(built.children(), context, built));
@@ -526,7 +504,7 @@ public class RequestEnrichment {
     private AgentModels.PlanningAgentRequests enrichPlanningAgentRequests(
             AgentModels.PlanningAgentRequests req, OperationContext context, Artifact.AgentModel parent) {
         AgentModels.PlanningAgentRequests built = req.toBuilder()
-                .resultId(resolveContextId(context, AgentType.PLANNING_AGENT_DISPATCH, parent))
+                .contextId(resolveContextId(context, AgentType.PLANNING_AGENT_DISPATCH, parent))
                 .build();
         return built
                 .withChildren(enrichChildren(built.children(), context, built));
@@ -535,7 +513,7 @@ public class RequestEnrichment {
     private AgentModels.TicketAgentRequests enrichTicketAgentRequests(
             AgentModels.TicketAgentRequests req, OperationContext context, Artifact.AgentModel parent) {
         AgentModels.TicketAgentRequests build = req.toBuilder()
-                .resultId(resolveContextId(context, AgentType.TICKET_AGENT_DISPATCH, parent))
+                .contextId(resolveContextId(context, AgentType.TICKET_AGENT_DISPATCH, parent))
                 .build();
         return build
                 .withChildren(enrichChildren(build.children(), context, build));
@@ -741,7 +719,7 @@ public class RequestEnrichment {
             }
             AgentModels.DiscoveryAgentResult lastResult = lastRouting.agentResult();
             var builder = PreviousContext.DiscoveryAgentPreviousContext.builder()
-                    .artifactKey(resolvePreviousContextKey(lastResult != null ? lastResult.resultId() : null))
+                    .artifactKey(resolvePreviousContextKey(lastResult != null ? lastResult.contextId() : null))
                     .serializedOutput(lastRouting.toString())
                     .attemptNumber(countAttempts(context, AgentModels.DiscoveryAgentRouting.class))
                     .previousAttemptAt(Instant.now());
@@ -760,7 +738,7 @@ public class RequestEnrichment {
             if (lastRouting == null) {
                 return null;
             }
-            ArtifactKey parentKey = lastRouting.agentResult() != null ? lastRouting.agentResult().resultId() : null;
+            ArtifactKey parentKey = lastRouting.agentResult() != null ? lastRouting.agentResult().contextId() : null;
             return PreviousContext.PlanningAgentPreviousContext.builder()
                     .artifactKey(resolvePreviousContextKey(parentKey))
                     .serializedOutput(lastRouting.toString())
@@ -777,7 +755,7 @@ public class RequestEnrichment {
             if (lastRouting == null) {
                 return null;
             }
-            ArtifactKey parentKey = lastRouting.agentResult() != null ? lastRouting.agentResult().resultId() : null;
+            ArtifactKey parentKey = lastRouting.agentResult() != null ? lastRouting.agentResult().contextId() : null;
             return PreviousContext.TicketAgentPreviousContext.builder()
                     .artifactKey(resolvePreviousContextKey(parentKey))
                     .serializedOutput(lastRouting.toString())
@@ -796,7 +774,7 @@ public class RequestEnrichment {
             }
             var builder = PreviousContext.DiscoveryCollectorPreviousContext.builder()
                     .artifactKey(resolvePreviousContextKey(lastRouting.collectorResult() != null
-                            ? lastRouting.collectorResult().resultId()
+                            ? lastRouting.collectorResult().contextId()
                             : null))
                     .serializedOutput(lastRouting.toString())
                     .attemptNumber(countAttempts(context, AgentModels.DiscoveryCollectorRouting.class))
@@ -819,7 +797,7 @@ public class RequestEnrichment {
             }
             var builder = PreviousContext.PlanningCollectorPreviousContext.builder()
                     .artifactKey(resolvePreviousContextKey(lastRouting.collectorResult() != null
-                            ? lastRouting.collectorResult().resultId()
+                            ? lastRouting.collectorResult().contextId()
                             : null))
                     .serializedOutput(lastRouting.toString())
                     .attemptNumber(countAttempts(context, AgentModels.PlanningCollectorRouting.class))
@@ -842,7 +820,7 @@ public class RequestEnrichment {
             }
             var builder = PreviousContext.TicketCollectorPreviousContext.builder()
                     .artifactKey(resolvePreviousContextKey(lastRouting.collectorResult() != null
-                            ? lastRouting.collectorResult().resultId()
+                            ? lastRouting.collectorResult().contextId()
                             : null))
                     .serializedOutput(lastRouting.toString())
                     .attemptNumber(countAttempts(context, AgentModels.TicketCollectorRouting.class))
@@ -863,7 +841,7 @@ public class RequestEnrichment {
             if (lastRouting == null) {
                 return null;
             }
-            ArtifactKey parentKey = lastRouting.reviewResult() != null ? lastRouting.reviewResult().resultId() : null;
+            ArtifactKey parentKey = lastRouting.reviewResult() != null ? lastRouting.reviewResult().contextId() : null;
             return PreviousContext.ReviewPreviousContext.builder()
                     .artifactKey(resolvePreviousContextKey(parentKey))
                     .serializedOutput(lastRouting.toString())
@@ -880,7 +858,7 @@ public class RequestEnrichment {
             if (lastRouting == null) {
                 return null;
             }
-            ArtifactKey parentKey = lastRouting.mergerResult() != null ? lastRouting.mergerResult().resultId() : null;
+            ArtifactKey parentKey = lastRouting.mergerResult() != null ? lastRouting.mergerResult().contextId() : null;
             return PreviousContext.MergerPreviousContext.builder()
                     .artifactKey(resolvePreviousContextKey(parentKey))
                     .serializedOutput(lastRouting.toString())

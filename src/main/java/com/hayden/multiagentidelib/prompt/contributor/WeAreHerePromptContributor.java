@@ -570,23 +570,8 @@ public class WeAreHerePromptContributor implements PromptContributor {
     }
 
     @Override
-    public Set<AgentType> applicableAgents() {
-        return Set.of(
-                AgentType.ORCHESTRATOR,
-                AgentType.ORCHESTRATOR_COLLECTOR,
-                AgentType.DISCOVERY_ORCHESTRATOR,
-                AgentType.DISCOVERY_AGENT_DISPATCH,
-                AgentType.DISCOVERY_COLLECTOR,
-                AgentType.PLANNING_ORCHESTRATOR,
-                AgentType.PLANNING_AGENT_DISPATCH,
-                AgentType.PLANNING_COLLECTOR,
-                AgentType.TICKET_ORCHESTRATOR,
-                AgentType.TICKET_AGENT_DISPATCH,
-                AgentType.TICKET_COLLECTOR,
-                AgentType.REVIEW_AGENT,
-                AgentType.MERGER_AGENT,
-                AgentType.CONTEXT_MANAGER
-        );
+    public boolean include(PromptContext promptContext) {
+        return true;
     }
 
     @Override

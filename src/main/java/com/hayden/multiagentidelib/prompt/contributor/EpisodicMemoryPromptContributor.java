@@ -13,9 +13,8 @@ public class EpisodicMemoryPromptContributor implements PromptContributor {
         return "episodic-memory";
     }
 
-    @Override
-    public Set<AgentType> applicableAgents() {
-        return Set.of(AgentType.ALL);
+    public boolean include(PromptContext promptContext) {
+        return true;
     }
 
     @Override

@@ -3,9 +3,11 @@ package com.hayden.multiagentidelib.agent;
 import com.embabel.agent.api.common.OperationContext;
 import com.embabel.agent.core.Blackboard;
 import com.hayden.commitdiffcontext.events.EventSubscriber;
+import com.hayden.utilitymodule.acp.events.Artifact;
 import com.hayden.utilitymodule.acp.events.EventBus;
 import com.hayden.utilitymodule.acp.events.EventListener;
 import com.hayden.utilitymodule.acp.events.Events;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
  * Blackboard history management for tracking action inputs and preventing
  * unwanted state accumulation through clearing.
  */
+@Slf4j
 public class BlackboardHistory implements EventListener, EventSubscriber<Events.GraphEvent> {
 
     private static final int DEFAULT_LOOP_THRESHOLD = 3;
@@ -29,6 +32,34 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
 
     private volatile WorkflowGraphState state;
     private volatile History history;
+
+    /**
+     * Functional interface for providing contextual prompts based on history.
+     * Implementations can augment base prompts with retry/loop information.
+     */
+    @FunctionalInterface
+    public interface PromptProvider {
+        String providePrompt(String basePrompt);
+
+        static PromptProvider identity() {
+            return basePrompt -> basePrompt;
+        }
+
+        default PromptProvider andThen(PromptProvider after) {
+            return basePrompt -> after.providePrompt(this.providePrompt(basePrompt));
+        }
+    }
+
+    /**
+     * Tracks a single historical blackboard state entry.
+     * Each entry represents a previous action's input that has been archived.
+     */
+    public sealed interface Entry permits DefaultEntry, MessageEntry {
+        Instant timestamp();
+        String actionName();
+        Object input();
+        Class<?> inputType();
+    }
 
     public BlackboardHistory(History history, String nodeId, WorkflowGraphState state) {
         this.history = history == null ? new History() : history;
@@ -109,11 +140,36 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
 
     public static <T> T getLastFromHistory(Blackboard context, Class<T> inputType) {
         var history = getEntireBlackboardHistory(context);
+
         if (history == null) {
             return null;
         }
 
         return history.getLastOfType(inputType);
+    }
+
+    public static <T> T findSecondToLastFromHistory(BlackboardHistory history, Class<T> type) {
+        if (history == null || type == null) {
+            return null;
+        }
+        List<BlackboardHistory.Entry> entries = history.copyOfEntries();
+        int numFound = 0;
+        for (int i = entries.size() - 1; i >= 0; i--) {
+            BlackboardHistory.Entry entry = entries.get(i);
+            if (entry == null) {
+                continue;
+            }
+            Object input = entry.input();
+            if (!(input instanceof Artifact.AgentModel model)) {
+                continue;
+            }
+            if (type.isInstance(model) && numFound == 1) {
+                return (T) model;
+            } else if (type.isInstance(model)) {
+                numFound += 1;
+            }
+        }
+        return null;
     }
 
     public static void setLoopThreshold(int threshold) {
@@ -128,11 +184,9 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
     }
 
     public static boolean detectLoop(OperationContext context, Class<?> inputType) {
-        History history = getBlackboardHistory(context);
-        if (history == null) {
-            return false;
-        }
-        return history.detectLoop(inputType, loopThreshold);
+        return Optional.ofNullable(getEntireBlackboardHistory(context))
+                .map(bh -> bh.fromHistory(h -> h.detectLoop(inputType)))
+                .orElse(false);
     }
 
     public static BlackboardHistory ensureSubscribed(EventBus eventBus, OperationContext context, Supplier<WorkflowGraphState> factory) {
@@ -143,12 +197,8 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
         if (existing != null) {
             return existing;
         }
-        History history = getBlackboardHistory(context);
-        if (history == null) {
-            history = new History();
-            context.getAgentProcess().addObject(history);
-        }
-        BlackboardHistory listener = new BlackboardHistory(history, resolveNodeId(context), factory.get());
+
+        BlackboardHistory listener = new BlackboardHistory(new History(), resolveNodeId(context), factory.get());
         context.getAgentProcess().addObject(listener);
         eventBus.subscribe(listener);
         return listener;
@@ -158,8 +208,14 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
         if (eventBus == null || context == null) {
             return;
         }
+
         BlackboardHistory existing = context.last(BlackboardHistory.class);
-        eventBus.unsubscribe(existing);
+
+        if (existing != null)
+            eventBus.unsubscribe(existing);
+        else
+            log.error("Attempted to unsubscribe from blackboard history not found for {}.",
+                       context.getAgentProcess().getId());
     }
 
     private static String resolveNodeId(OperationContext context) {
@@ -178,33 +234,6 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
         return List.copyOf(this.history.entries());
     }
 
-    /**
-     * Functional interface for providing contextual prompts based on history.
-     * Implementations can augment base prompts with retry/loop information.
-     */
-    @FunctionalInterface
-    public interface PromptProvider {
-        String providePrompt(String basePrompt);
-        
-        static PromptProvider identity() {
-            return basePrompt -> basePrompt;
-        }
-        
-        default PromptProvider andThen(PromptProvider after) {
-            return basePrompt -> after.providePrompt(this.providePrompt(basePrompt));
-        }
-    }
-
-    /**
-     * Tracks a single historical blackboard state entry.
-     * Each entry represents a previous action's input that has been archived.
-     */
-    public sealed interface Entry permits DefaultEntry, MessageEntry {
-        Instant timestamp();
-        String actionName();
-        Object input();
-        Class<?> inputType();
-    }
 
     public record DefaultEntry(
             Instant timestamp,
@@ -297,7 +326,8 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
                     .map(entry -> (T) entry.input())
                     .reduce((first, second) -> second)
                     .or(() -> entries.stream()
-                            .filter(entry -> entry.inputType() != null && entry.inputType().isAssignableFrom(type))
+                            .filter(entry -> entry.inputType() != null
+                                        && type.isAssignableFrom(entry.inputType()))
                             .map(entry -> (T) entry.input())
                             .reduce((first, second) -> second));
         }

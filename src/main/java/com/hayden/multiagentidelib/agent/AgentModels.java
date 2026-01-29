@@ -3,6 +3,7 @@ package com.hayden.multiagentidelib.agent;
 import com.embabel.agent.api.common.SomeOf;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.hayden.multiagentidelib.template.ConsolidationTemplate;
 import com.hayden.multiagentidelib.template.DelegationTemplate;
@@ -14,13 +15,10 @@ import com.hayden.utilitymodule.acp.events.ArtifactKey;
 import com.hayden.utilitymodule.acp.events.Events;
 import lombok.Builder;
 import lombok.With;
-import lombok.extern.slf4j.Slf4j;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public interface AgentModels {
 
@@ -35,11 +33,13 @@ public interface AgentModels {
             permits DiscoveryAgentResult, DiscoveryCollectorResult, DiscoveryOrchestratorResult, MergerAgentResult, OrchestratorAgentResult, OrchestratorCollectorResult, PlanningAgentResult, PlanningCollectorResult, PlanningOrchestratorResult, ReviewAgentResult, TicketAgentResult, TicketCollectorResult, TicketOrchestratorResult
 
     {
-        ArtifactKey resultId();
+
+        ArtifactKey contextId();
 
         @Override
+        @JsonIgnore
         default ArtifactKey artifactKey() {
-            return resultId();
+            return contextId();
         }
 
         @Override
@@ -105,24 +105,24 @@ public interface AgentModels {
 
     sealed interface InterruptRequest extends AgentRequest
             permits
-            AgentModels.OrchestratorInterruptRequest,
-            AgentModels.OrchestratorCollectorInterruptRequest,
-            AgentModels.DiscoveryOrchestratorInterruptRequest,
-            AgentModels.DiscoveryAgentInterruptRequest,
-            AgentModels.DiscoveryCollectorInterruptRequest,
-            AgentModels.DiscoveryAgentDispatchInterruptRequest,
-            AgentModels.PlanningOrchestratorInterruptRequest,
-            AgentModels.PlanningAgentInterruptRequest,
-            AgentModels.PlanningCollectorInterruptRequest,
-            AgentModels.PlanningAgentDispatchInterruptRequest,
-            AgentModels.TicketOrchestratorInterruptRequest,
-            AgentModels.TicketAgentInterruptRequest,
-            AgentModels.TicketCollectorInterruptRequest,
-            AgentModels.TicketAgentDispatchInterruptRequest,
-            AgentModels.ReviewInterruptRequest,
-            AgentModels.MergerInterruptRequest,
-            AgentModels.ContextManagerInterruptRequest,
-            AgentModels.QuestionAnswerInterruptRequest {
+            InterruptRequest.OrchestratorInterruptRequest,
+            InterruptRequest.OrchestratorCollectorInterruptRequest,
+            InterruptRequest.DiscoveryOrchestratorInterruptRequest,
+            InterruptRequest.DiscoveryAgentInterruptRequest,
+            InterruptRequest.DiscoveryCollectorInterruptRequest,
+            InterruptRequest.DiscoveryAgentDispatchInterruptRequest,
+            InterruptRequest.PlanningOrchestratorInterruptRequest,
+            InterruptRequest.PlanningAgentInterruptRequest,
+            InterruptRequest.PlanningCollectorInterruptRequest,
+            InterruptRequest.PlanningAgentDispatchInterruptRequest,
+            InterruptRequest.TicketOrchestratorInterruptRequest,
+            InterruptRequest.TicketAgentInterruptRequest,
+            InterruptRequest.TicketCollectorInterruptRequest,
+            InterruptRequest.TicketAgentDispatchInterruptRequest,
+            InterruptRequest.ReviewInterruptRequest,
+            InterruptRequest.MergerInterruptRequest,
+            InterruptRequest.ContextManagerInterruptRequest,
+            InterruptRequest.QuestionAnswerInterruptRequest {
 
         Events.InterruptType type();
 
@@ -150,486 +150,504 @@ public interface AgentModels {
             appendConfirmationItems(builder, confirmationItems());
             return builder.toString();
         }
-    }
 
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for orchestrator-level workflow steering.")
-    record OrchestratorInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Current workflow phase (DISCOVERY, PLANNING, TICKETS, COMPLETE).")
-            String phase,
-            @JsonPropertyDescription("Workflow goal statement.")
-            String goal,
-            @JsonPropertyDescription("High-level workflow context or state summary.")
-            String workflowContext
-    ) implements InterruptRequest {
-        @Override
-        public <T extends Artifact.AgentModel> T withChildren(List<Artifact.AgentModel> c) {
-            return (T) this;
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for orchestrator-level workflow steering.")
+        record OrchestratorInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Current workflow phase (DISCOVERY, PLANNING, TICKETS, COMPLETE).")
+                String phase,
+                @JsonPropertyDescription("Workflow goal statement.")
+                String goal,
+                @JsonPropertyDescription("High-level workflow context or state summary.")
+                String workflowContext
+        ) implements InterruptRequest {
+            @Override
+            public <T extends Artifact.AgentModel> T withChildren(List<Artifact.AgentModel> c) {
+                return (T) this;
+            }
         }
-    }
 
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for orchestrator collector phase decisions.")
-    record OrchestratorCollectorInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Proposed phase decision or outcome.")
-            String phaseDecision,
-            @JsonPropertyDescription("Summary of collector results driving the decision.")
-            String collectorResults,
-            @JsonPropertyDescription("Rationale for advancing or routing back.")
-            String advancementRationale,
-            @JsonPropertyDescription("Available phase options for routing.")
-            List<String> phaseOptions
-    ) implements InterruptRequest {
-    }
-
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for discovery orchestration scope and partitioning.")
-    record DiscoveryOrchestratorInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Proposed partitioning of discovery subdomains.")
-            List<String> subdomainPartitioning,
-            @JsonPropertyDescription("Coverage goals for the discovery phase.")
-            String coverageGoals,
-            @JsonPropertyDescription("Discovery strategy or approach summary.")
-            String discoveryStrategy,
-            @JsonPropertyDescription("Scope boundaries for discovery.")
-            String scope
-    ) implements InterruptRequest {
-    }
-
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for discovery agent code finding clarification.")
-    record DiscoveryAgentInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Summary of key code findings and questions.")
-            String codeFindings,
-            @JsonPropertyDescription("Relevant file paths or references.")
-            List<String> fileReferences,
-            @JsonPropertyDescription("Decisions or questions about boundaries/ownership.")
-            List<String> boundaryDecisions,
-            @JsonPropertyDescription("Observed architectural patterns or conventions.")
-            List<String> patternObservations
-    ) implements InterruptRequest {
-    }
-
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for discovery collector consolidation decisions.")
-    record DiscoveryCollectorInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Consolidation decisions or tradeoffs under consideration.")
-            String consolidationDecisions,
-            @JsonPropertyDescription("Recommendations derived from discovery results.")
-            List<String> recommendations,
-            @JsonPropertyDescription("Key code references supporting the consolidation.")
-            List<String> codeReferences,
-            @JsonPropertyDescription("Subdomain boundaries used in the consolidation.")
-            List<String> subdomainBoundaries
-    ) implements InterruptRequest {
-    }
-
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for discovery dispatch routing decisions.")
-    record DiscoveryAgentDispatchInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Summary of dispatch decisions under consideration.")
-            String dispatchDecisions,
-            @JsonPropertyDescription("Proposed agent assignments.")
-            List<String> agentAssignments,
-            @JsonPropertyDescription("Workload distribution notes or constraints.")
-            List<String> workloadDistribution,
-            @JsonPropertyDescription("Rationale for the routing decision.")
-            String routingRationale
-    ) implements InterruptRequest {
-    }
-
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for planning orchestration and decomposition decisions.")
-    record PlanningOrchestratorInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Planned ticket decomposition summary.")
-            String ticketDecomposition,
-            @JsonPropertyDescription("Strategy for breaking down tickets.")
-            String ticketBreakdownStrategy,
-            @JsonPropertyDescription("How discovery context informed planning.")
-            String discoveryContextUsage,
-            @JsonPropertyDescription("Scope boundaries for planning.")
-            String planningScope
-    ) implements InterruptRequest {
-    }
-
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for planning agent ticket design decisions.")
-    record PlanningAgentInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Ticket design summary or open questions.")
-            String ticketDesign,
-            @JsonPropertyDescription("Architecture decisions or tradeoffs being considered.")
-            List<String> architectureDecisions,
-            @JsonPropertyDescription("Proposed planning tickets.")
-            List<PlanningTicket> proposedTickets,
-            @JsonPropertyDescription("Discovery references informing planning.")
-            List<MemoryReference> discoveryReferences
-    ) implements InterruptRequest {
-    }
-
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for planning collector consolidation decisions.")
-    record PlanningCollectorInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Summary of ticket consolidation decisions.")
-            String ticketConsolidation,
-            @JsonPropertyDescription("Dependency resolution strategy or conflicts.")
-            String dependencyResolution,
-            @JsonPropertyDescription("Consolidated tickets under consideration.")
-            List<PlanningTicket> consolidatedTickets,
-            @JsonPropertyDescription("Conflicting dependencies needing resolution.")
-            List<String> dependencyConflicts
-    ) implements InterruptRequest {
-    }
-
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for planning dispatch routing decisions.")
-    record PlanningAgentDispatchInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Proposed agent assignments for tickets.")
-            List<String> agentAssignments,
-            @JsonPropertyDescription("Ticket distribution or batching notes.")
-            List<String> ticketDistribution,
-            @JsonPropertyDescription("Routing notes about discovery context usage.")
-            String discoveryContextRouting,
-            @JsonPropertyDescription("Rationale for the routing decision.")
-            String routingRationale
-    ) implements InterruptRequest {
-    }
-
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for ticket orchestration and execution scope decisions.")
-    record TicketOrchestratorInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Implementation scope under consideration.")
-            String implementationScope,
-            @JsonPropertyDescription("How planning context informed execution.")
-            String planningContextUsage,
-            @JsonPropertyDescription("Execution strategy or sequencing notes.")
-            String executionStrategy
-    ) implements InterruptRequest {
-    }
-
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for ticket agent implementation decisions.")
-    record TicketAgentInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Implementation approach under consideration.")
-            String implementationApproach,
-            @JsonPropertyDescription("Summary of expected file changes.")
-            List<String> fileChanges,
-            @JsonPropertyDescription("Specific files to modify or create.")
-            List<String> filesToModify,
-            @JsonPropertyDescription("Planned test strategies or verification steps.")
-            List<String> testStrategies
-    ) implements InterruptRequest {
-    }
-
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for ticket collector completion decisions.")
-    record TicketCollectorInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Completion status summary or open questions.")
-            String completionStatus,
-            @JsonPropertyDescription("Follow-up items or remaining work.")
-            List<String> followUps,
-            @JsonPropertyDescription("Verification or test result summaries.")
-            List<String> verificationResults
-    ) implements InterruptRequest {
-    }
-
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for ticket dispatch routing decisions.")
-    record TicketAgentDispatchInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Proposed agent assignments for tickets.")
-            List<String> agentAssignments,
-            @JsonPropertyDescription("Ticket distribution or batching notes.")
-            List<String> ticketDistribution,
-            @JsonPropertyDescription("Context routing notes for execution.")
-            String contextRouting,
-            @JsonPropertyDescription("Rationale for the routing decision.")
-            String routingRationale
-    ) implements InterruptRequest {
-    }
-
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for review agent assessment decisions.")
-    record ReviewInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Review criteria under consideration.")
-            String reviewCriteria,
-            @JsonPropertyDescription("Assessment findings or concerns.")
-            List<String> assessmentFindings,
-            @JsonPropertyDescription("Approval recommendation or stance.")
-            String approvalRecommendation
-    ) implements InterruptRequest {
-    }
-
-    @JsonClassDescription("Interrupt request for merger conflict resolution decisions.")
-    record MergerInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Conflicting file paths or identifiers.")
-            List<String> conflictFiles,
-            @JsonPropertyDescription("Resolution strategies being considered.")
-            List<String> resolutionStrategies,
-            @JsonPropertyDescription("Preferred merge approach.")
-            String mergeApproach
-    ) implements InterruptRequest {
-        public MergerInterruptRequest(ArtifactKey key, Events.InterruptType type, String reason) {
-            this(key, type, reason, List.of(), List.of(), "", List.of(), List.of(), "");
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for orchestrator collector phase decisions.")
+        record OrchestratorCollectorInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Proposed phase decision or outcome.")
+                String phaseDecision,
+                @JsonPropertyDescription("Summary of collector results driving the decision.")
+                String collectorResults,
+                @JsonPropertyDescription("Rationale for advancing or routing back.")
+                String advancementRationale,
+                @JsonPropertyDescription("Available phase options for routing.")
+                List<String> phaseOptions
+        ) implements InterruptRequest {
         }
-    }
 
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for context manager routing decisions.")
-    record ContextManagerInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision,
-            @JsonPropertyDescription("Summary of context reconstruction findings.")
-            String contextFindings,
-            @JsonPropertyDescription("Relevance assessments for sources.")
-            List<String> relevanceAssessments,
-            @JsonPropertyDescription("Source references used during reconstruction.")
-            List<String> sourceReferences
-    ) implements InterruptRequest {
-    }
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for discovery orchestration scope and partitioning.")
+        record DiscoveryOrchestratorInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Proposed partitioning of discovery subdomains.")
+                List<String> subdomainPartitioning,
+                @JsonPropertyDescription("Coverage goals for the discovery phase.")
+                String coverageGoals,
+                @JsonPropertyDescription("Discovery strategy or approach summary.")
+                String discoveryStrategy,
+                @JsonPropertyDescription("Scope boundaries for discovery.")
+                String scope
+        ) implements InterruptRequest {
+        }
 
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Interrupt request for user question/answer flow.")
-    record QuestionAnswerInterruptRequest(
-            ArtifactKey contextId,
-            @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
-            Events.InterruptType type,
-            @JsonPropertyDescription("Natural language explanation of the uncertainty.")
-            String reason,
-            @JsonPropertyDescription("Structured decision choices for the controller.")
-            List<StructuredChoice> choices,
-            @JsonPropertyDescription("Yes/no confirmations required for continuation.")
-            List<ConfirmationItem> confirmationItems,
-            @JsonPropertyDescription("Concise context needed to make the decision.")
-            String contextForDecision
-    ) implements InterruptRequest {
-    }
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for discovery agent code finding clarification.")
+        record DiscoveryAgentInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Summary of key code findings and questions.")
+                String codeFindings,
+                @JsonPropertyDescription("Relevant file paths or references.")
+                List<String> fileReferences,
+                @JsonPropertyDescription("Decisions or questions about boundaries/ownership.")
+                List<String> boundaryDecisions,
+                @JsonPropertyDescription("Observed architectural patterns or conventions.")
+                List<String> patternObservations
+        ) implements InterruptRequest {
+        }
 
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Multiple-choice decision with optional write-in.")
-    record StructuredChoice(
-            @JsonPropertyDescription("Stable identifier for this choice.")
-            String choiceId,
-            @JsonPropertyDescription("Decision question posed to the controller.")
-            String question,
-            @JsonPropertyDescription("Additional context for the decision.")
-            String context,
-            @JsonPropertyDescription("Options map with keys A/B/C/CUSTOM.")
-            Map<String, String> options,
-            @JsonPropertyDescription("Recommended option key if applicable.")
-            String recommended
-    ) {
-    }
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for discovery collector consolidation decisions.")
+        record DiscoveryCollectorInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Consolidation decisions or tradeoffs under consideration.")
+                String consolidationDecisions,
+                @JsonPropertyDescription("Recommendations derived from discovery results.")
+                List<String> recommendations,
+                @JsonPropertyDescription("Key code references supporting the consolidation.")
+                List<String> codeReferences,
+                @JsonPropertyDescription("Subdomain boundaries used in the consolidation.")
+                List<String> subdomainBoundaries
+        ) implements InterruptRequest {
+        }
 
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Yes/no confirmation item for interrupt decisions.")
-    record ConfirmationItem(
-            @JsonPropertyDescription("Stable identifier for this confirmation.")
-            String confirmationId,
-            @JsonPropertyDescription("Confirmation statement to approve or deny.")
-            String statement,
-            @JsonPropertyDescription("Additional context for the confirmation.")
-            String context,
-            @JsonPropertyDescription("Default value when unspecified.")
-            Boolean defaultValue,
-            @JsonPropertyDescription("Impact if the confirmation is denied.")
-            String impactIfNo
-    ) {
-    }
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for discovery dispatch routing decisions.")
+        record DiscoveryAgentDispatchInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Summary of dispatch decisions under consideration.")
+                String dispatchDecisions,
+                @JsonPropertyDescription("Proposed agent assignments.")
+                List<String> agentAssignments,
+                @JsonPropertyDescription("Workload distribution notes or constraints.")
+                List<String> workloadDistribution,
+                @JsonPropertyDescription("Rationale for the routing decision.")
+                String routingRationale
+        ) implements InterruptRequest {
+        }
 
-    @Builder(toBuilder=true)
-    @JsonClassDescription("Controller response resolving an interrupt request.")
-    record InterruptResolution(
-            @JsonPropertyDescription("Selected option per choiceId (A/B/C/CUSTOM).")
-            Map<String, String> selectedChoices,
-            @JsonPropertyDescription("Custom inputs keyed by choiceId when CUSTOM is selected.")
-            Map<String, String> customInputs,
-            @JsonPropertyDescription("Confirmation decisions keyed by confirmationId.")
-            Map<String, Boolean> confirmations
-    ) {
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for planning orchestration and decomposition decisions.")
+        record PlanningOrchestratorInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Planned ticket decomposition summary.")
+                String ticketDecomposition,
+                @JsonPropertyDescription("Strategy for breaking down tickets.")
+                String ticketBreakdownStrategy,
+                @JsonPropertyDescription("How discovery context informed planning.")
+                String discoveryContextUsage,
+                @JsonPropertyDescription("Scope boundaries for planning.")
+                String planningScope
+        ) implements InterruptRequest {
+        }
+
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for planning agent ticket design decisions.")
+        record PlanningAgentInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Ticket design summary or open questions.")
+                String ticketDesign,
+                @JsonPropertyDescription("Architecture decisions or tradeoffs being considered.")
+                List<String> architectureDecisions,
+                @JsonPropertyDescription("Proposed planning tickets.")
+                List<PlanningTicket> proposedTickets,
+                @JsonPropertyDescription("Discovery references informing planning.")
+                List<MemoryReference> discoveryReferences
+        ) implements InterruptRequest {
+        }
+
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for planning collector consolidation decisions.")
+        record PlanningCollectorInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Summary of ticket consolidation decisions.")
+                String ticketConsolidation,
+                @JsonPropertyDescription("Dependency resolution strategy or conflicts.")
+                String dependencyResolution,
+                @JsonPropertyDescription("Consolidated tickets under consideration.")
+                List<PlanningTicket> consolidatedTickets,
+                @JsonPropertyDescription("Conflicting dependencies needing resolution.")
+                List<String> dependencyConflicts
+        ) implements InterruptRequest {
+        }
+
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for planning dispatch routing decisions.")
+        record PlanningAgentDispatchInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Proposed agent assignments for tickets.")
+                List<String> agentAssignments,
+                @JsonPropertyDescription("Ticket distribution or batching notes.")
+                List<String> ticketDistribution,
+                @JsonPropertyDescription("Routing notes about discovery context usage.")
+                String discoveryContextRouting,
+                @JsonPropertyDescription("Rationale for the routing decision.")
+                String routingRationale
+        ) implements InterruptRequest {
+        }
+
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for ticket orchestration and execution scope decisions.")
+        record TicketOrchestratorInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Implementation scope under consideration.")
+                String implementationScope,
+                @JsonPropertyDescription("How planning context informed execution.")
+                String planningContextUsage,
+                @JsonPropertyDescription("Execution strategy or sequencing notes.")
+                String executionStrategy
+        ) implements InterruptRequest {
+        }
+
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for ticket agent implementation decisions.")
+        record TicketAgentInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Implementation approach under consideration.")
+                String implementationApproach,
+                @JsonPropertyDescription("Summary of expected file changes.")
+                List<String> fileChanges,
+                @JsonPropertyDescription("Specific files to modify or create.")
+                List<String> filesToModify,
+                @JsonPropertyDescription("Planned test strategies or verification steps.")
+                List<String> testStrategies
+        ) implements InterruptRequest {
+        }
+
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for ticket collector completion decisions.")
+        record TicketCollectorInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Completion status summary or open questions.")
+                String completionStatus,
+                @JsonPropertyDescription("Follow-up items or remaining work.")
+                List<String> followUps,
+                @JsonPropertyDescription("Verification or test result summaries.")
+                List<String> verificationResults
+        ) implements InterruptRequest {
+        }
+
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for ticket dispatch routing decisions.")
+        record TicketAgentDispatchInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Proposed agent assignments for tickets.")
+                List<String> agentAssignments,
+                @JsonPropertyDescription("Ticket distribution or batching notes.")
+                List<String> ticketDistribution,
+                @JsonPropertyDescription("Context routing notes for execution.")
+                String contextRouting,
+                @JsonPropertyDescription("Rationale for the routing decision.")
+                String routingRationale
+        ) implements InterruptRequest {
+        }
+
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for review agent assessment decisions.")
+        record ReviewInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Review criteria under consideration.")
+                String reviewCriteria,
+                @JsonPropertyDescription("Assessment findings or concerns.")
+                List<String> assessmentFindings,
+                @JsonPropertyDescription("Approval recommendation or stance.")
+                String approvalRecommendation
+        ) implements InterruptRequest {
+        }
+
+        @JsonClassDescription("Interrupt request for merger conflict resolution decisions.")
+        record MergerInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Conflicting file paths or identifiers.")
+                List<String> conflictFiles,
+                @JsonPropertyDescription("Resolution strategies being considered.")
+                List<String> resolutionStrategies,
+                @JsonPropertyDescription("Preferred merge approach.")
+                String mergeApproach
+        ) implements InterruptRequest {
+            public MergerInterruptRequest(ArtifactKey key, Events.InterruptType type, String reason) {
+                this(key, type, reason, List.of(), List.of(), "", List.of(), List.of(), "");
+            }
+        }
+
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for context manager routing decisions.")
+        record ContextManagerInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision,
+                @JsonPropertyDescription("Summary of context reconstruction findings.")
+                String contextFindings,
+                @JsonPropertyDescription("Relevance assessments for sources.")
+                List<String> relevanceAssessments,
+                @JsonPropertyDescription("Source references used during reconstruction.")
+                List<String> sourceReferences
+        ) implements InterruptRequest {
+        }
+
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Interrupt request for user question/answer flow.")
+        record QuestionAnswerInterruptRequest(
+                @JsonInclude(JsonInclude.Include.NON_NULL)
+                ArtifactKey contextId,
+                @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
+                Events.InterruptType type,
+                @JsonPropertyDescription("Natural language explanation of the uncertainty.")
+                String reason,
+                @JsonPropertyDescription("Structured decision choices for the controller.")
+                List<StructuredChoice> choices,
+                @JsonPropertyDescription("Yes/no confirmations required for continuation.")
+                List<ConfirmationItem> confirmationItems,
+                @JsonPropertyDescription("Concise context needed to make the decision.")
+                String contextForDecision
+        ) implements InterruptRequest {
+        }
+
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Multiple-choice decision with optional write-in.")
+        record StructuredChoice(
+                @JsonPropertyDescription("Stable identifier for this choice.")
+                String choiceId,
+                @JsonPropertyDescription("Decision question posed to the controller.")
+                String question,
+                @JsonPropertyDescription("Additional context for the decision.")
+                String context,
+                @JsonPropertyDescription("Options map with keys A/B/C/CUSTOM.")
+                Map<String, String> options,
+                @JsonPropertyDescription("Recommended option key if applicable.")
+                String recommended
+        ) {
+        }
+
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Yes/no confirmation item for interrupt decisions.")
+        record ConfirmationItem(
+                @JsonPropertyDescription("Stable identifier for this confirmation.")
+                String confirmationId,
+                @JsonPropertyDescription("Confirmation statement to approve or deny.")
+                String statement,
+                @JsonPropertyDescription("Additional context for the confirmation.")
+                String context,
+                @JsonPropertyDescription("Default value when unspecified.")
+                Boolean defaultValue,
+                @JsonPropertyDescription("Impact if the confirmation is denied.")
+                String impactIfNo
+        ) {
+        }
+
+        @Builder(toBuilder=true)
+        @JsonClassDescription("Controller response resolving an interrupt request.")
+        record InterruptResolution(
+                @JsonPropertyDescription("Selected option per choiceId (A/B/C/CUSTOM).")
+                Map<String, String> selectedChoices,
+                @JsonPropertyDescription("Custom inputs keyed by choiceId when CUSTOM is selected.")
+                Map<String, String> customInputs,
+                @JsonPropertyDescription("Confirmation decisions keyed by confirmationId.")
+                Map<String, Boolean> confirmations
+        ) {
+        }
     }
 
     @Builder(toBuilder=true)
@@ -672,13 +690,12 @@ public interface AgentModels {
      */
     @Builder(toBuilder=true)
     record OrchestratorAgentResult(
-            String schemaVersion,
-            ArtifactKey resultId,
+            ArtifactKey contextId,
             ArtifactKey upstreamArtifactKey,
             String output
     ) implements AgentResult {
         public OrchestratorAgentResult(String output) {
-            this(null, null, null, output);
+            this(null, null, output);
         }
 
         @Override
@@ -689,13 +706,12 @@ public interface AgentModels {
 
     @Builder(toBuilder=true)
     record DiscoveryOrchestratorResult(
-            String schemaVersion,
-            ArtifactKey resultId,
+            ArtifactKey contextId,
             ArtifactKey upstreamArtifactKey,
             String output
     ) implements AgentResult {
         public DiscoveryOrchestratorResult(String output) {
-            this(null, null, null, output);
+            this(null, null, output);
         }
 
         @Override
@@ -706,13 +722,12 @@ public interface AgentModels {
 
     @Builder(toBuilder=true)
     record PlanningOrchestratorResult(
-            String schemaVersion,
-            ArtifactKey resultId,
+            ArtifactKey contextId,
             ArtifactKey upstreamArtifactKey,
             String output
     ) implements AgentResult {
         public PlanningOrchestratorResult(String output) {
-            this(null, null, null, output);
+            this(null, null, output);
         }
 
         @Override
@@ -724,17 +739,15 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Result payload from the ticket orchestrator.")
     record TicketOrchestratorResult(
-            @JsonPropertyDescription("Schema version for this result payload.")
-            String schemaVersion,
             @JsonPropertyDescription("Unique context id for this result.")
-            ArtifactKey resultId,
+            ArtifactKey contextId,
             @JsonPropertyDescription("Upstream context id driving this result.")
             ArtifactKey upstreamArtifactKey,
             @JsonPropertyDescription("Human-readable summary output.")
             String output
     ) implements AgentResult {
         public TicketOrchestratorResult(String output) {
-            this(null, null, null, output);
+            this(null, null, output);
         }
 
         @Override
@@ -751,10 +764,8 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Result payload from a discovery agent.")
     record DiscoveryAgentResult(
-            @JsonPropertyDescription("Schema version for this result payload.")
-            String schemaVersion,
             @JsonPropertyDescription("Unique context id for this result.")
-            ArtifactKey resultId,
+            ArtifactKey contextId,
             @JsonPropertyDescription("Upstream context id driving this result.")
             ArtifactKey upstreamArtifactKey,
             @JsonPropertyDescription("Structured discovery report.")
@@ -780,7 +791,7 @@ public interface AgentModels {
         }
 
         public DiscoveryAgentResult(String output) {
-            this(null, null, null, null, output);
+            this(null, null, null, output);
         }
 
         @Override
@@ -802,10 +813,8 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Result payload from a planning agent.")
     record PlanningAgentResult(
-            @JsonPropertyDescription("Schema version for this result payload.")
-            String schemaVersion,
             @JsonPropertyDescription("Unique context id for this result.")
-            ArtifactKey resultId,
+            ArtifactKey contextId,
             @JsonPropertyDescription("Upstream context id driving this result.")
             ArtifactKey upstreamArtifactKey,
             @JsonPropertyDescription("Discovery result id referenced during planning.")
@@ -837,7 +846,7 @@ public interface AgentModels {
         }
 
         public PlanningAgentResult(String output) {
-            this(null, null, null, null, null, output);
+            this(null, null, null, null, output);
         }
 
         @Override
@@ -865,10 +874,8 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Result payload from a ticket execution agent.")
     record TicketAgentResult(
-            @JsonPropertyDescription("Schema version for this result payload.")
-            String schemaVersion,
             @JsonPropertyDescription("Unique context id for this result.")
-            ArtifactKey resultId,
+            ArtifactKey contextId,
             @JsonPropertyDescription("Upstream context id driving this result.")
             ArtifactKey upstreamArtifactKey,
             @JsonPropertyDescription("Ticket identifier being implemented.")
@@ -893,7 +900,7 @@ public interface AgentModels {
             String output
     ) implements AgentResult {
         public TicketAgentResult(String output) {
-            this(null, null, null, null, null, null, null, null, null, null, null, null, output);
+            this(null, null, null, null, null, null, null, null, null, null, null, output);
         }
 
         @Override
@@ -921,8 +928,7 @@ public interface AgentModels {
 
     @Builder(toBuilder=true)
     record ReviewAgentResult(
-            String schemaVersion,
-            ArtifactKey resultId,
+            ArtifactKey contextId,
             ArtifactKey upstreamArtifactKey,
             String assessmentStatus,
             String feedback,
@@ -931,7 +937,7 @@ public interface AgentModels {
             String output
     ) implements AgentResult {
         public ReviewAgentResult(String output) {
-            this(null, null, null, null, output, null, null, output);
+            this(null, null, null, output, null, null, output);
         }
 
         @Override
@@ -971,10 +977,8 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Result payload from a merger agent.")
     record MergerAgentResult(
-            @JsonPropertyDescription("Schema version for this result payload.")
-            String schemaVersion,
             @JsonPropertyDescription("Unique context id for this result.")
-            ArtifactKey resultId,
+            ArtifactKey contextId,
             @JsonPropertyDescription("Upstream context id driving this result.")
             ArtifactKey upstreamArtifactKey,
             @JsonPropertyDescription("Acceptability assessment of the merge.")
@@ -987,7 +991,7 @@ public interface AgentModels {
             String output
     ) implements AgentResult {
         public MergerAgentResult(String output) {
-            this(null, null, null, null, null, null, output);
+            this(null, null, null, null, null, output);
         }
 
         @Override
@@ -1037,24 +1041,12 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Consolidated discovery results and routing decision.")
     record DiscoveryCollectorResult(
-            @JsonPropertyDescription("Schema version for this result payload.")
-            String schemaVersion,
             @JsonPropertyDescription("Unique context id for this result.")
-            ArtifactKey resultId,
-            @JsonPropertyDescription("Input references consolidated into this result.")
-            List<ConsolidationTemplate.InputReference> inputs,
-            @JsonPropertyDescription("Merge strategy used for consolidation.")
-            String mergeStrategy,
-            @JsonPropertyDescription("Conflict resolutions applied during merge.")
-            List<ConsolidationTemplate.ConflictResolution> conflictResolutions,
-            @JsonPropertyDescription("Aggregated metrics from inputs.")
-            Map<String, Double> aggregatedMetrics,
+            ArtifactKey contextId,
             @JsonPropertyDescription("Unified consolidated output summary.")
             String consolidatedOutput,
             @JsonPropertyDescription("Collector decision for routing.")
             CollectorDecision collectorDecision,
-            @JsonPropertyDescription("Upstream context chain for traceability.")
-            List<ArtifactKey> upstreamContextChain,
             @JsonPropertyDescription("Additional metadata for the result.")
             Map<String, String> metadata,
             @JsonPropertyDescription("Unified code map derived from discovery.")
@@ -1085,7 +1077,7 @@ public interface AgentModels {
         }
 
         public DiscoveryCollectorResult(String consolidatedOutput, CollectorDecision collectorDecision) {
-            this(null, null, List.of(), null, List.of(), Map.of(), consolidatedOutput, collectorDecision, List.of(), Map.of(), null, List.of(), Map.of(), null);
+            this(null, consolidatedOutput, collectorDecision, Map.of(), null, List.of(), Map.of(), null);
         }
 
         @Override
@@ -1121,32 +1113,18 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Consolidated planning results and routing decision.")
     record PlanningCollectorResult(
-            @JsonPropertyDescription("Schema version for this result payload.")
-            String schemaVersion,
             @JsonPropertyDescription("Unique context id for this result.")
-            ArtifactKey resultId,
-            @JsonPropertyDescription("Input references consolidated into this result.")
-            List<ConsolidationTemplate.InputReference> inputs,
-            @JsonPropertyDescription("Merge strategy used for consolidation.")
-            String mergeStrategy,
-            @JsonPropertyDescription("Conflict resolutions applied during merge.")
-            List<ConsolidationTemplate.ConflictResolution> conflictResolutions,
-            @JsonPropertyDescription("Aggregated metrics from inputs.")
-            Map<String, Double> aggregatedMetrics,
+            ArtifactKey contextId,
             @JsonPropertyDescription("Unified consolidated output summary.")
             String consolidatedOutput,
             @JsonPropertyDescription("Collector decision for routing.")
             CollectorDecision collectorDecision,
-            @JsonPropertyDescription("Upstream context chain for traceability.")
-            List<ArtifactKey> upstreamContextChain,
             @JsonPropertyDescription("Additional metadata for the result.")
             Map<String, String> metadata,
             @JsonPropertyDescription("Finalized planning tickets.")
             List<PlanningTicket> finalizedTickets,
             @JsonPropertyDescription("Dependency graph between tickets.")
             List<TicketDependency> dependencyGraph,
-            @JsonPropertyDescription("Discovery result id referenced during planning.")
-            ArtifactKey discoveryResultId,
             @JsonPropertyDescription("Curated planning context for downstream agents.")
             UpstreamContext.PlanningCollectorContext planningCuration
     ) implements ConsolidationTemplate, AgentResult {
@@ -1169,7 +1147,7 @@ public interface AgentModels {
         }
 
         public PlanningCollectorResult(String consolidatedOutput, CollectorDecision collectorDecision) {
-            this(null, null, List.of(), null, List.of(), Map.of(), consolidatedOutput, collectorDecision, List.of(), Map.of(), List.of(), List.of(), null, null);
+            this(null, consolidatedOutput, collectorDecision, Map.of(), List.of(), List.of(), null);
         }
 
         @Override
@@ -1214,24 +1192,12 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Final consolidated workflow result and routing decision.")
     record OrchestratorCollectorResult(
-            @JsonPropertyDescription("Schema version for this result payload.")
-            String schemaVersion,
             @JsonPropertyDescription("Unique context id for this result.")
-            ArtifactKey resultId,
-            @JsonPropertyDescription("Input references consolidated into this result.")
-            List<ConsolidationTemplate.InputReference> inputs,
-            @JsonPropertyDescription("Merge strategy used for consolidation.")
-            String mergeStrategy,
-            @JsonPropertyDescription("Conflict resolutions applied during merge.")
-            List<ConsolidationTemplate.ConflictResolution> conflictResolutions,
-            @JsonPropertyDescription("Aggregated metrics from inputs.")
-            Map<String, Double> aggregatedMetrics,
+            ArtifactKey contextId,
             @JsonPropertyDescription("Unified consolidated output summary.")
             String consolidatedOutput,
             @JsonPropertyDescription("Collector decision for routing.")
             CollectorDecision collectorDecision,
-            @JsonPropertyDescription("Upstream context chain for traceability.")
-            List<ArtifactKey> upstreamContextChain,
             @JsonPropertyDescription("Additional metadata for the result.")
             Map<String, String> metadata,
             @JsonPropertyDescription("Discovery collector result included in consolidation.")
@@ -1272,7 +1238,7 @@ public interface AgentModels {
         }
 
         public OrchestratorCollectorResult(String consolidatedOutput, CollectorDecision collectorDecision) {
-            this(null, null, List.of(), null, List.of(), Map.of(), consolidatedOutput, collectorDecision, List.of(), Map.of(), null, null, null);
+            this(null, consolidatedOutput, collectorDecision, Map.of(), null, null, null);
         }
 
         @Override
@@ -1314,24 +1280,12 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Consolidated ticket execution results and routing decision.")
     record TicketCollectorResult(
-            @JsonPropertyDescription("Schema version for this result payload.")
-            String schemaVersion,
             @JsonPropertyDescription("Unique context id for this result.")
-            ArtifactKey resultId,
-            @JsonPropertyDescription("Input references consolidated into this result.")
-            List<ConsolidationTemplate.InputReference> inputs,
-            @JsonPropertyDescription("Merge strategy used for consolidation.")
-            String mergeStrategy,
-            @JsonPropertyDescription("Conflict resolutions applied during merge.")
-            List<ConsolidationTemplate.ConflictResolution> conflictResolutions,
-            @JsonPropertyDescription("Aggregated metrics from inputs.")
-            Map<String, Double> aggregatedMetrics,
+            ArtifactKey contextId,
             @JsonPropertyDescription("Unified consolidated output summary.")
             String consolidatedOutput,
             @JsonPropertyDescription("Collector decision for routing.")
             CollectorDecision collectorDecision,
-            @JsonPropertyDescription("Upstream context chain for traceability.")
-            List<ArtifactKey> upstreamContextChain,
             @JsonPropertyDescription("Additional metadata for the result.")
             Map<String, String> metadata,
             @JsonPropertyDescription("Completion status summary.")
@@ -1341,6 +1295,11 @@ public interface AgentModels {
             @JsonPropertyDescription("Curated ticket context for downstream agents.")
             UpstreamContext.TicketCollectorContext ticketCuration
     ) implements ConsolidationTemplate, AgentResult {
+
+        public TicketCollectorResult(String consolidatedOutput, CollectorDecision collectorDecision) {
+            this(null, consolidatedOutput, collectorDecision, Map.of(), "", List.of(), null);
+        }
+
         @Override
         public List<Artifact.AgentModel> children() {
             List<Artifact.AgentModel> children = new ArrayList<>();
@@ -1357,10 +1316,6 @@ public interface AgentModels {
             return (T) this.toBuilder()
                     .ticketCuration(updatedCuration)
                     .build();
-        }
-
-        public TicketCollectorResult(String consolidatedOutput, CollectorDecision collectorDecision) {
-            this(null, null, List.of(), null, List.of(), Map.of(), consolidatedOutput, collectorDecision, List.of(), Map.of(), null, List.of(), null);
         }
 
         @Override
@@ -1443,12 +1398,12 @@ public interface AgentModels {
         }
     }
 
-    private static void appendStructuredChoices(StringBuilder builder, List<StructuredChoice> choices) {
+    private static void appendStructuredChoices(StringBuilder builder, List<InterruptRequest.StructuredChoice> choices) {
         if (choices == null || choices.isEmpty()) {
             return;
         }
         builder.append("Choices:\n");
-        for (StructuredChoice choice : choices) {
+        for (InterruptRequest.StructuredChoice choice : choices) {
             if (choice == null) {
                 continue;
             }
@@ -1483,12 +1438,12 @@ public interface AgentModels {
         }
     }
 
-    private static void appendConfirmationItems(StringBuilder builder, List<ConfirmationItem> items) {
+    private static void appendConfirmationItems(StringBuilder builder, List<InterruptRequest.ConfirmationItem> items) {
         if (items == null || items.isEmpty()) {
             return;
         }
         builder.append("Confirmations:\n");
-        for (ConfirmationItem item : items) {
+        for (InterruptRequest.ConfirmationItem item : items) {
             if (item == null) {
                 continue;
             }
@@ -1655,7 +1610,6 @@ public interface AgentModels {
             List<PlanningAgentResult> planningAgentResults,
             List<PlanningTicket> finalizedTickets,
             List<TicketDependency> dependencyGraph,
-            ArtifactKey discoveryResultId,
             List<MemoryReference> memoryReferences,
             ConsolidationTemplate.ConsolidationSummary consolidationSummary
     ) implements AgentContext {
@@ -1795,6 +1749,7 @@ public interface AgentModels {
     @JsonClassDescription("Top-level orchestrator request to coordinate workflow phases.")
     @With
     record OrchestratorRequest(
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Workflow goal statement.")
@@ -1873,6 +1828,7 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Orchestrator collector request to finalize workflow outputs.")
     record OrchestratorCollectorRequest(
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Workflow goal statement.")
@@ -1976,7 +1932,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for the orchestrator.")
     record OrchestratorRouting(
             @JsonPropertyDescription("Interrupt request for orchestration decisions.")
-            OrchestratorInterruptRequest interruptRequest,
+            InterruptRequest.OrchestratorInterruptRequest interruptRequest,
             @JsonPropertyDescription("Route to orchestrator collector for finalization.")
             OrchestratorCollectorRequest collectorRequest,
             @JsonPropertyDescription("Route to discovery orchestrator to start discovery.")
@@ -1984,7 +1940,7 @@ public interface AgentModels {
             @JsonPropertyDescription("Route to context manager for context reconstruction.")
             ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
-        public OrchestratorRouting(OrchestratorInterruptRequest interruptRequest, OrchestratorCollectorRequest collectorRequest) {
+        public OrchestratorRouting(InterruptRequest.OrchestratorInterruptRequest interruptRequest, OrchestratorCollectorRequest collectorRequest) {
             this(interruptRequest, collectorRequest, null, null);
         }
     }
@@ -1993,7 +1949,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for the orchestrator collector.")
     record OrchestratorCollectorRouting(
             @JsonPropertyDescription("Interrupt request for collector decisions.")
-            OrchestratorCollectorInterruptRequest interruptRequest,
+            InterruptRequest.OrchestratorCollectorInterruptRequest interruptRequest,
             @JsonPropertyDescription("Collector result to drive branching decisions.")
             OrchestratorCollectorResult collectorResult,
             @JsonPropertyDescription("Route back to orchestrator.")
@@ -2028,6 +1984,7 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Request for the discovery orchestrator to partition and dispatch discovery work.")
     record DiscoveryOrchestratorRequest(
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Workflow goal statement.")
@@ -2074,6 +2031,7 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Request for a discovery agent to inspect a subdomain.")
     record DiscoveryAgentRequest(
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Workflow goal statement.")
@@ -2130,20 +2088,13 @@ public interface AgentModels {
     record DiscoveryAgentRequests(
             @JsonPropertyDescription("List of discovery agent requests.")
             List<DiscoveryAgentRequest> requests,
-            @JsonPropertyDescription("Schema version for this delegation payload.")
-            String schemaVersion,
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this delegation result.")
-            ArtifactKey resultId,
-            @JsonPropertyDescription("Upstream context id driving this delegation.")
-            ArtifactKey upstreamArtifactKey,
+            ArtifactKey contextId,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
             @JsonPropertyDescription("Rationale for delegation and assignments.")
             String delegationRationale,
-            @JsonPropertyDescription("Agent assignments describing distribution.")
-            List<DelegationTemplate.AgentAssignment> assignments,
-            @JsonPropertyDescription("Context selections for each assignment.")
-            List<DelegationTemplate.ContextSelection> contextSelections,
             @JsonPropertyDescription("Additional metadata for delegation.")
             Map<String, String> metadata
     ) implements DelegationTemplate, AgentRequest {
@@ -2170,7 +2121,7 @@ public interface AgentModels {
         }
 
         public DiscoveryAgentRequests(List<DiscoveryAgentRequest> requests) {
-            this(requests, null, null, null, null, null, null, null, null);
+            this(requests, null, null, null, null);
         }
 
         @Override
@@ -2183,8 +2134,9 @@ public interface AgentModels {
         }
 
         @Override
+        @JsonIgnore
         public ArtifactKey contextId() {
-            return resultId;
+            return contextId;
         }
 
         @Override
@@ -2233,6 +2185,7 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Request for the discovery collector to consolidate agent findings.")
     record DiscoveryCollectorRequest(
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Workflow goal statement.")
@@ -2288,7 +2241,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for the discovery orchestrator.")
     record DiscoveryOrchestratorRouting(
             @JsonPropertyDescription("Interrupt request for discovery orchestration decisions.")
-            DiscoveryOrchestratorInterruptRequest interruptRequest,
+            InterruptRequest.DiscoveryOrchestratorInterruptRequest interruptRequest,
             @JsonPropertyDescription("Delegation payload for discovery agents.")
             DiscoveryAgentRequests agentRequests,
             @JsonPropertyDescription("Route to discovery collector.")
@@ -2302,7 +2255,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for a discovery agent.")
     record DiscoveryAgentRouting(
             @JsonPropertyDescription("Interrupt request for discovery agent decisions.")
-            DiscoveryAgentInterruptRequest interruptRequest,
+            InterruptRequest.DiscoveryAgentInterruptRequest interruptRequest,
             @JsonPropertyDescription("Discovery agent result payload.")
             DiscoveryAgentResult agentResult,
             @JsonPropertyDescription("Optional route to planning orchestrator.")
@@ -2310,7 +2263,7 @@ public interface AgentModels {
             @JsonPropertyDescription("Route to context manager for context reconstruction.")
             ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
-        public DiscoveryAgentRouting(DiscoveryAgentInterruptRequest interruptRequest, DiscoveryAgentResult agentResult) {
+        public DiscoveryAgentRouting(InterruptRequest.DiscoveryAgentInterruptRequest interruptRequest, DiscoveryAgentResult agentResult) {
             this(interruptRequest, agentResult, null, null);
         }
     }
@@ -2319,7 +2272,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for the discovery collector.")
     record DiscoveryCollectorRouting(
             @JsonPropertyDescription("Interrupt request for discovery collector decisions.")
-            DiscoveryCollectorInterruptRequest interruptRequest,
+            InterruptRequest.DiscoveryCollectorInterruptRequest interruptRequest,
             @JsonPropertyDescription("Collector result to drive branching decisions.")
             DiscoveryCollectorResult collectorResult,
             @JsonPropertyDescription("Route to orchestrator.")
@@ -2343,7 +2296,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for discovery agent dispatch.")
     record DiscoveryAgentDispatchRouting(
             @JsonPropertyDescription("Interrupt request for dispatch decisions.")
-            DiscoveryAgentDispatchInterruptRequest interruptRequest,
+            InterruptRequest.DiscoveryAgentDispatchInterruptRequest interruptRequest,
             @JsonPropertyDescription("Route to discovery collector with aggregated results.")
             DiscoveryCollectorRequest collectorRequest,
             @JsonPropertyDescription("Route to context manager for context reconstruction.")
@@ -2356,6 +2309,7 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Request for the planning orchestrator to decompose work.")
     record PlanningOrchestratorRequest(
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Workflow goal statement.")
@@ -2405,6 +2359,7 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Request for a planning agent to produce tickets.")
     record PlanningAgentRequest(
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Workflow goal statement.")
@@ -2457,20 +2412,13 @@ public interface AgentModels {
     record PlanningAgentRequests(
             @JsonPropertyDescription("List of planning agent requests.")
             List<PlanningAgentRequest> requests,
-            @JsonPropertyDescription("Schema version for this delegation payload.")
-            String schemaVersion,
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this delegation result.")
-            ArtifactKey resultId,
-            @JsonPropertyDescription("Upstream context id driving this delegation.")
-            ArtifactKey upstreamArtifactKey,
+            ArtifactKey contextId,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
             @JsonPropertyDescription("Rationale for delegation and assignments.")
             String delegationRationale,
-            @JsonPropertyDescription("Agent assignments describing distribution.")
-            List<DelegationTemplate.AgentAssignment> assignments,
-            @JsonPropertyDescription("Context selections for each assignment.")
-            List<DelegationTemplate.ContextSelection> contextSelections,
             @JsonPropertyDescription("Additional metadata for delegation.")
             Map<String, String> metadata
     ) implements DelegationTemplate, AgentRequest {
@@ -2497,7 +2445,7 @@ public interface AgentModels {
         }
 
         public PlanningAgentRequests(List<PlanningAgentRequest> requests) {
-            this(requests, null, null, null, null, null, null, null, null);
+            this(requests, null, null, null, null);
         }
 
         @Override
@@ -2507,11 +2455,6 @@ public interface AgentModels {
                         resolveGoal();
                 default -> AgentRequest.super.prettyPrint(serializationCtx);
             };
-        }
-
-        @Override
-        public ArtifactKey contextId() {
-            return this.resultId;
         }
 
         @Override
@@ -2560,6 +2503,7 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Request for the planning collector to consolidate tickets.")
     record PlanningCollectorRequest(
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Workflow goal statement.")
@@ -2623,7 +2567,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for the planning orchestrator.")
     record PlanningOrchestratorRouting(
             @JsonPropertyDescription("Interrupt request for planning orchestration decisions.")
-            PlanningOrchestratorInterruptRequest interruptRequest,
+            InterruptRequest.PlanningOrchestratorInterruptRequest interruptRequest,
             @JsonPropertyDescription("Delegation payload for planning agents.")
             PlanningAgentRequests agentRequests,
             @JsonPropertyDescription("Route to planning collector.")
@@ -2637,7 +2581,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for a planning agent.")
     record PlanningAgentRouting(
             @JsonPropertyDescription("Interrupt request for planning agent decisions.")
-            PlanningAgentInterruptRequest interruptRequest,
+            InterruptRequest.PlanningAgentInterruptRequest interruptRequest,
             @JsonPropertyDescription("Planning agent result payload.")
             PlanningAgentResult agentResult,
             @JsonPropertyDescription("Route to context manager for context reconstruction.")
@@ -2649,7 +2593,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for the planning collector.")
     record PlanningCollectorRouting(
             @JsonPropertyDescription("Interrupt request for planning collector decisions.")
-            PlanningCollectorInterruptRequest interruptRequest,
+            InterruptRequest.PlanningCollectorInterruptRequest interruptRequest,
             @JsonPropertyDescription("Collector result to drive branching decisions.")
             PlanningCollectorResult collectorResult,
             @JsonPropertyDescription("Route back to planning orchestrator.")
@@ -2667,7 +2611,7 @@ public interface AgentModels {
             @JsonPropertyDescription("Route to context manager for context reconstruction.")
             ContextManagerRoutingRequest contextManagerRequest
     ) implements Routing {
-        public PlanningCollectorRouting(PlanningCollectorInterruptRequest interruptRequest, PlanningCollectorResult collectorResult, PlanningOrchestratorRequest planningRequest, DiscoveryOrchestratorRequest discoveryOrchestratorRequest, ReviewRequest reviewRequest, MergerRequest mergerRequest) {
+        public PlanningCollectorRouting(InterruptRequest.PlanningCollectorInterruptRequest interruptRequest, PlanningCollectorResult collectorResult, PlanningOrchestratorRequest planningRequest, DiscoveryOrchestratorRequest discoveryOrchestratorRequest, ReviewRequest reviewRequest, MergerRequest mergerRequest) {
             this(interruptRequest, collectorResult, planningRequest, discoveryOrchestratorRequest, reviewRequest, mergerRequest, null, null, null);
         }
     }
@@ -2676,7 +2620,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for planning agent dispatch.")
     record PlanningAgentDispatchRouting(
             @JsonPropertyDescription("Interrupt request for dispatch decisions.")
-            PlanningAgentDispatchInterruptRequest interruptRequest,
+            InterruptRequest.PlanningAgentDispatchInterruptRequest interruptRequest,
             @JsonPropertyDescription("Route to planning collector with aggregated results.")
             PlanningCollectorRequest planningCollectorRequest,
             @JsonPropertyDescription("Route to context manager for context reconstruction.")
@@ -2690,6 +2634,7 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Request for the ticket orchestrator to execute planned work.")
     record TicketOrchestratorRequest(
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Workflow goal statement.")
@@ -2819,20 +2764,13 @@ public interface AgentModels {
     record TicketAgentRequests(
             @JsonPropertyDescription("List of ticket agent requests.")
             List<TicketAgentRequest> requests,
-            @JsonPropertyDescription("Schema version for this delegation payload.")
-            String schemaVersion,
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this delegation result.")
-            ArtifactKey resultId,
-            @JsonPropertyDescription("Upstream context id driving this delegation.")
-            ArtifactKey upstreamArtifactKey,
+            ArtifactKey contextId,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
             @JsonPropertyDescription("Rationale for delegation and assignments.")
             String delegationRationale,
-            @JsonPropertyDescription("Agent assignments describing distribution.")
-            List<DelegationTemplate.AgentAssignment> assignments,
-            @JsonPropertyDescription("Context selections for each assignment.")
-            List<DelegationTemplate.ContextSelection> contextSelections,
             @JsonPropertyDescription("Additional metadata for delegation.")
             Map<String, String> metadata
     ) implements DelegationTemplate, AgentRequest {
@@ -2868,13 +2806,9 @@ public interface AgentModels {
         }
 
         @Override
+        @JsonIgnore
         public ArtifactKey contextId() {
-            return this.resultId;
-        }
-
-        @Override
-        public ArtifactKey upstreamArtifactKey() {
-            return upstreamArtifactKey;
+            return this.contextId;
         }
 
         @Override
@@ -2917,6 +2851,7 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Request for the ticket collector to consolidate execution results.")
     record TicketCollectorRequest(
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Workflow goal statement.")
@@ -2988,7 +2923,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for the ticket orchestrator.")
     record TicketOrchestratorRouting(
             @JsonPropertyDescription("Interrupt request for ticket orchestration decisions.")
-            TicketOrchestratorInterruptRequest interruptRequest,
+            InterruptRequest.TicketOrchestratorInterruptRequest interruptRequest,
             @JsonPropertyDescription("Delegation payload for ticket agents.")
             TicketAgentRequests agentRequests,
             @JsonPropertyDescription("Route to ticket collector.")
@@ -3002,7 +2937,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for a ticket agent.")
     record TicketAgentRouting(
             @JsonPropertyDescription("Interrupt request for ticket agent decisions.")
-            TicketAgentInterruptRequest interruptRequest,
+            InterruptRequest.TicketAgentInterruptRequest interruptRequest,
             @JsonPropertyDescription("Ticket agent result payload.")
             TicketAgentResult agentResult,
             @JsonPropertyDescription("Route to context manager for context reconstruction.")
@@ -3014,7 +2949,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for the ticket collector.")
     record TicketCollectorRouting(
             @JsonPropertyDescription("Interrupt request for ticket collector decisions.")
-            TicketCollectorInterruptRequest interruptRequest,
+            InterruptRequest.TicketCollectorInterruptRequest interruptRequest,
             @JsonPropertyDescription("Collector result to drive branching decisions.")
             TicketCollectorResult collectorResult,
             @JsonPropertyDescription("Route back to ticket orchestrator.")
@@ -3034,7 +2969,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for ticket agent dispatch.")
     record TicketAgentDispatchRouting(
             @JsonPropertyDescription("Interrupt request for dispatch decisions.")
-            TicketAgentDispatchInterruptRequest interruptRequest,
+            InterruptRequest.TicketAgentDispatchInterruptRequest interruptRequest,
             @JsonPropertyDescription("Route to ticket collector with aggregated results.")
             TicketCollectorRequest ticketCollectorRequest,
             @JsonPropertyDescription("Route to context manager for context reconstruction.")
@@ -3048,6 +2983,7 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Request for the review agent to assess content.")
     record ReviewRequest(
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Content to review.")
@@ -3131,7 +3067,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for the review agent.")
     record ReviewRouting(
             @JsonPropertyDescription("Interrupt request for review decisions.")
-            ReviewInterruptRequest interruptRequest,
+            InterruptRequest.ReviewInterruptRequest interruptRequest,
             @JsonPropertyDescription("Review agent result payload.")
             ReviewAgentResult reviewResult,
             @JsonPropertyDescription("Route to orchestrator collector.")
@@ -3153,6 +3089,7 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Request for the merger agent to validate a merge.")
     record MergerRequest(
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Merge context or details.")
@@ -3253,7 +3190,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for the merger agent.")
     record MergerRouting(
             @JsonPropertyDescription("Interrupt request for merger decisions.")
-            MergerInterruptRequest interruptRequest,
+            InterruptRequest.MergerInterruptRequest interruptRequest,
             @JsonPropertyDescription("Merger agent result payload.")
             MergerAgentResult mergerResult,
             @JsonPropertyDescription("Route to orchestrator collector.")
@@ -3279,11 +3216,20 @@ public interface AgentModels {
     record ContextManagerRoutingRequest(
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
-            @JsonPropertyDescription("Reason for requesting context reconstruction.")
+            @JsonPropertyDescription("Clear explanation of what context you need blackboard intra-agent context.")
             String reason,
+            @JsonPropertyDescription("Specific description of what information is missing.")
+            String missingContextDescription,
             @JsonPropertyDescription("Type of context reconstruction to request.")
-            ContextManagerRequestType type
+            ContextManagerRequestType type,
+            @JsonPropertyDescription("Optional hints about which agent or phase might have the needed context.")
+            String suggestedSources
     ) implements AgentRequest {
+
+        public ContextManagerRoutingRequest(ArtifactKey contextId, String reason, ContextManagerRequestType type) {
+            this(contextId, reason, "", type, "");
+        }
+
         @Override
         public String prettyPrintInterruptContinuation() {
             if (reason == null || reason.isBlank()) {
@@ -3296,6 +3242,7 @@ public interface AgentModels {
     @Builder(toBuilder=true)
     @JsonClassDescription("Request for Context Manager to reconstruct context.")
     record ContextManagerRequest(
+            @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Type of context reconstruction.")
@@ -3572,7 +3519,7 @@ public interface AgentModels {
     @JsonClassDescription("Routing result for the context manager agent.")
     record ContextManagerResultRouting(
             @JsonPropertyDescription("Interrupt request for context manager decisions.")
-            ContextManagerInterruptRequest interruptRequest,
+            InterruptRequest.ContextManagerInterruptRequest interruptRequest,
             @JsonPropertyDescription("Route to orchestrator.")
             OrchestratorRequest orchestratorRequest,
             @JsonPropertyDescription("Route to orchestrator collector.")

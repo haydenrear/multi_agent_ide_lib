@@ -8,23 +8,11 @@ import java.util.Map;
 
 public interface ConsolidationTemplate {
 
-    String schemaVersion();
-
-    ArtifactKey resultId();
-
-    List<InputReference> inputs();
-
-    String mergeStrategy();
-
-    List<ConflictResolution> conflictResolutions();
-
-    Map<String, Double> aggregatedMetrics();
+    ArtifactKey contextId();
 
     String consolidatedOutput();
 
     AgentModels.CollectorDecision decision();
-
-    List<ArtifactKey> upstreamContextChain();
 
     Map<String, String> metadata();
 
@@ -32,26 +20,7 @@ public interface ConsolidationTemplate {
         return List.of();
     }
 
-    record InputReference(
-            ArtifactKey inputContextId,
-            String inputType,
-            String inputSummary
-    ) {
-    }
-
-    record ConflictResolution(
-            String conflictDescription,
-            String resolutionApproach,
-            List<ArtifactKey> conflictingInputs
-    ) {
-    }
-
     interface Curation {
-        ArtifactKey artifactKey();
-
-        ArtifactKey sourceResultId();
-
-        String selectionRationale();
     }
 
     record ConsolidationSummary(

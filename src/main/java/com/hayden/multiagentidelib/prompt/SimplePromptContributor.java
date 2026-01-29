@@ -36,9 +36,8 @@ public final class SimplePromptContributor implements PromptContributor {
         return name;
     }
 
-    @Override
-    public Set<AgentType> applicableAgents() {
-        return applicableAgents;
+    public boolean include(PromptContext promptContext) {
+        return applicableAgents.contains(promptContext.agentType());
     }
 
     @Override

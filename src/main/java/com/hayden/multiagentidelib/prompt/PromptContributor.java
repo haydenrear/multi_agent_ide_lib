@@ -15,7 +15,7 @@ public interface PromptContributor extends Templated {
 
     String name();
 
-    Set<AgentType> applicableAgents();
+    boolean include(PromptContext promptContext);
 
     String contribute(PromptContext context);
 
@@ -68,11 +68,10 @@ public interface PromptContributor extends Templated {
         return List.of();
     }
 
-    default boolean isApplicable(AgentType agentType) {
+    default boolean isApplicable(PromptContext agentType) {
         if (agentType == null) {
             return false;
         }
-        Set<AgentType> targets = applicableAgents();
-        return targets != null && (targets.contains(agentType) || targets.contains(AgentType.ALL));
+        return include(agentType);
     }
 }

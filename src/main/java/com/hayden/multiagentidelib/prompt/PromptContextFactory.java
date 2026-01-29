@@ -7,13 +7,11 @@ import com.hayden.multiagentidelib.agent.PreviousContext;
 import com.hayden.multiagentidelib.agent.UpstreamContext;
 import com.hayden.utilitymodule.acp.events.ArtifactKey;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * Factory for creating PromptContext instances by extracting upstream contexts
@@ -141,41 +139,41 @@ public class PromptContextFactory {
             }
             case AgentModels.InterruptRequest interruptRequest -> {
                 switch(interruptRequest) {
-                    case AgentModels.ContextManagerInterruptRequest contextManagerInterruptRequest -> {
+                    case AgentModels.InterruptRequest.ContextManagerInterruptRequest contextManagerInterruptRequest -> {
                     }
-                    case AgentModels.DiscoveryAgentDispatchInterruptRequest discoveryAgentDispatchInterruptRequest -> {
+                    case AgentModels.InterruptRequest.DiscoveryAgentDispatchInterruptRequest discoveryAgentDispatchInterruptRequest -> {
                     }
-                    case AgentModels.DiscoveryAgentInterruptRequest discoveryAgentInterruptRequest -> {
+                    case AgentModels.InterruptRequest.DiscoveryAgentInterruptRequest discoveryAgentInterruptRequest -> {
                     }
-                    case AgentModels.DiscoveryCollectorInterruptRequest discoveryCollectorInterruptRequest -> {
+                    case AgentModels.InterruptRequest.DiscoveryCollectorInterruptRequest discoveryCollectorInterruptRequest -> {
                     }
-                    case AgentModels.DiscoveryOrchestratorInterruptRequest discoveryOrchestratorInterruptRequest -> {
+                    case AgentModels.InterruptRequest.DiscoveryOrchestratorInterruptRequest discoveryOrchestratorInterruptRequest -> {
                     }
-                    case AgentModels.MergerInterruptRequest mergerInterruptRequest -> {
+                    case AgentModels.InterruptRequest.MergerInterruptRequest mergerInterruptRequest -> {
                     }
-                    case AgentModels.OrchestratorCollectorInterruptRequest orchestratorCollectorInterruptRequest -> {
+                    case AgentModels.InterruptRequest.OrchestratorCollectorInterruptRequest orchestratorCollectorInterruptRequest -> {
                     }
-                    case AgentModels.OrchestratorInterruptRequest orchestratorInterruptRequest -> {
+                    case AgentModels.InterruptRequest.OrchestratorInterruptRequest orchestratorInterruptRequest -> {
                     }
-                    case AgentModels.PlanningAgentDispatchInterruptRequest planningAgentDispatchInterruptRequest -> {
+                    case AgentModels.InterruptRequest.PlanningAgentDispatchInterruptRequest planningAgentDispatchInterruptRequest -> {
                     }
-                    case AgentModels.PlanningAgentInterruptRequest planningAgentInterruptRequest -> {
+                    case AgentModels.InterruptRequest.PlanningAgentInterruptRequest planningAgentInterruptRequest -> {
                     }
-                    case AgentModels.PlanningCollectorInterruptRequest planningCollectorInterruptRequest -> {
+                    case AgentModels.InterruptRequest.PlanningCollectorInterruptRequest planningCollectorInterruptRequest -> {
                     }
-                    case AgentModels.PlanningOrchestratorInterruptRequest planningOrchestratorInterruptRequest -> {
+                    case AgentModels.InterruptRequest.PlanningOrchestratorInterruptRequest planningOrchestratorInterruptRequest -> {
                     }
-                    case AgentModels.QuestionAnswerInterruptRequest questionAnswerInterruptRequest -> {
+                    case AgentModels.InterruptRequest.QuestionAnswerInterruptRequest questionAnswerInterruptRequest -> {
                     }
-                    case AgentModels.ReviewInterruptRequest reviewInterruptRequest -> {
+                    case AgentModels.InterruptRequest.ReviewInterruptRequest reviewInterruptRequest -> {
                     }
-                    case AgentModels.TicketAgentDispatchInterruptRequest ticketAgentDispatchInterruptRequest -> {
+                    case AgentModels.InterruptRequest.TicketAgentDispatchInterruptRequest ticketAgentDispatchInterruptRequest -> {
                     }
-                    case AgentModels.TicketAgentInterruptRequest ticketAgentInterruptRequest -> {
+                    case AgentModels.InterruptRequest.TicketAgentInterruptRequest ticketAgentInterruptRequest -> {
                     }
-                    case AgentModels.TicketCollectorInterruptRequest ticketCollectorInterruptRequest -> {
+                    case AgentModels.InterruptRequest.TicketCollectorInterruptRequest ticketCollectorInterruptRequest -> {
                     }
-                    case AgentModels.TicketOrchestratorInterruptRequest ticketOrchestratorInterruptRequest -> {
+                    case AgentModels.InterruptRequest.TicketOrchestratorInterruptRequest ticketOrchestratorInterruptRequest -> {
                     }
                 }
             }
