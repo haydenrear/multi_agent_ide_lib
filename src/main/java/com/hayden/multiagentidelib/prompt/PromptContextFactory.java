@@ -24,7 +24,6 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class PromptContextFactory {
 
-    private final ContextIdService contextIdService;
 
     private final PromptContributorService promptContributor;
 

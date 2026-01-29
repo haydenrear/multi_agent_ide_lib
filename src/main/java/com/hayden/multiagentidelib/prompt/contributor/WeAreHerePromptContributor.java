@@ -1,8 +1,11 @@
-package com.hayden.multiagentidelib.prompt;
+package com.hayden.multiagentidelib.prompt.contributor;
 
 import com.hayden.multiagentidelib.agent.AgentModels;
 import com.hayden.multiagentidelib.agent.AgentType;
 import com.hayden.multiagentidelib.agent.BlackboardHistory;
+import com.hayden.multiagentidelib.prompt.PromptContext;
+import com.hayden.multiagentidelib.prompt.PromptContributor;
+import com.hayden.multiagentidelib.prompt.WorkflowAgentGraphNode;
 
 import java.util.ArrayList;
 import java.util.List;

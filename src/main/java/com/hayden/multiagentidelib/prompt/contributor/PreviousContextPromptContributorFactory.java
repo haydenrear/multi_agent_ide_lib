@@ -1,7 +1,10 @@
-package com.hayden.multiagentidelib.prompt;
+package com.hayden.multiagentidelib.prompt.contributor;
 
-import com.hayden.multiagentidelib.agent.AgentModels;
 import com.hayden.multiagentidelib.agent.AgentType;
+import com.hayden.multiagentidelib.prompt.PromptContext;
+import com.hayden.multiagentidelib.prompt.PromptContributor;
+import com.hayden.multiagentidelib.prompt.PromptContributorFactory;
+import com.hayden.multiagentidelib.prompt.SimplePromptContributor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

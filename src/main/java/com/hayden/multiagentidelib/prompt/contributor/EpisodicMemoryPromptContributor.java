@@ -1,6 +1,8 @@
-package com.hayden.multiagentidelib.prompt;
+package com.hayden.multiagentidelib.prompt.contributor;
 
 import com.hayden.multiagentidelib.agent.AgentType;
+import com.hayden.multiagentidelib.prompt.PromptContext;
+import com.hayden.multiagentidelib.prompt.PromptContributor;
 
 import java.util.Set;
 

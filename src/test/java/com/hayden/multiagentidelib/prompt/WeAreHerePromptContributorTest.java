@@ -1,6 +1,7 @@
 package com.hayden.multiagentidelib.prompt;
 
 import com.hayden.multiagentidelib.agent.*;
+import com.hayden.multiagentidelib.prompt.contributor.WeAreHerePromptContributor;
 import com.hayden.utilitymodule.acp.events.ArtifactKey;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,7 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 

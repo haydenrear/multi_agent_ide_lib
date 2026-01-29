@@ -1,16 +1,17 @@
 package com.hayden.multiagentidelib.artifact;
 
 import com.hayden.utilitymodule.acp.events.Artifact;
+import com.hayden.utilitymodule.acp.events.ArtifactHashing;
 import com.hayden.utilitymodule.acp.events.ArtifactKey;
 import com.hayden.utilitymodule.acp.events.Templated;
 import lombok.Builder;
 import lombok.With;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -28,8 +29,10 @@ public record PromptTemplateVersion(
         String hash,
         ArtifactKey templateArtifactKey,
         Instant lastUpdatedAt,
-        String sourceLocation
+        String sourceLocation,
+        List<Artifact> children
 ) implements Templated {
+
 
     // Validation pattern for template static IDs
     private static final Pattern STATIC_ID_PATTERN = Pattern.compile(
@@ -60,7 +63,8 @@ public record PromptTemplateVersion(
                 hash,
                 artifactKey,
                 now,
-                sourceLocation
+                sourceLocation,
+                new ArrayList<>()
         );
     }
 
@@ -82,26 +86,9 @@ public record PromptTemplateVersion(
                 contentHash,
                 templateArtifactKey,
                 lastUpdatedAt,
-                sourceLocation
+                sourceLocation,
+                new ArrayList<>()
         );
-    }
-
-    @Override
-    public String render(Map<String, Object> inputs) {
-        if (templateText == null) {
-            return "";
-        }
-
-        String rendered = templateText;
-
-        // Simple Jinja2-style variable substitution: {{ var }} -> value
-        for (Map.Entry<String, Object> entry : inputs.entrySet()) {
-            String placeholder = "\\{\\{\\s*" + Pattern.quote(entry.getKey()) + "\\s*\\}\\}";
-            String value = entry.getValue() != null ? entry.getValue().toString() : "";
-            rendered = rendered.replaceAll(placeholder, Matcher.quoteReplacement(value));
-        }
-
-        return rendered;
     }
 
     @Override
@@ -132,28 +119,6 @@ public record PromptTemplateVersion(
         return Map.of();
     }
 
-    @Override
-    public List<Artifact> children() {
-        return List.of();
-    }
-
-    /**
-     * Checks if the template text has changed from the stored version.
-     */
-    public boolean hasChanged(String newTemplateText) {
-        if (newTemplateText == null) {
-            return templateText != null;
-        }
-        String newHash = ArtifactHashing.hashText(newTemplateText);
-        return !newHash.equals(hash);
-    }
-
-    /**
-     * Creates a new version with updated text.
-     */
-    public PromptTemplateVersion withUpdatedText(String newTemplateText) {
-        return PromptTemplateVersion.create(templateStaticId, newTemplateText, sourceLocation);
-    }
 
     /**
      * Validates a template static ID format.

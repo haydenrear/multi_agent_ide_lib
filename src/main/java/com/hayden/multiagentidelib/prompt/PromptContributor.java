@@ -2,6 +2,7 @@ package com.hayden.multiagentidelib.prompt;
 
 import com.hayden.multiagentidelib.agent.AgentType;
 
+import java.util.Map;
 import java.util.Set;
 
 public interface PromptContributor {
@@ -11,6 +12,10 @@ public interface PromptContributor {
     Set<AgentType> applicableAgents();
 
     String contribute(PromptContext context);
+
+    String template();
+
+    Map<String, Object> args();
 
     int priority();
 

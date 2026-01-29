@@ -23,28 +23,8 @@ public interface PromptContributionListener {
      * @param context The prompt context that was used
      */
     void onContribution(
-            String contributorName,
-            int priority,
-            Set<AgentType> applicableAgents,
-            String contributedText,
-            int orderIndex,
-            PromptContext context
+            PromptContext context,
+            PromptContributor promptContributor
     );
     
-    /**
-     * Called when prompt assembly is complete.
-     * 
-     * @param basePrompt The base prompt before contributions
-     * @param assembledPrompt The final assembled prompt with all contributions
-     * @param contributionCount The total number of contributions applied
-     * @param context The prompt context that was used
-     */
-    default void onAssemblyComplete(
-            String basePrompt,
-            String assembledPrompt,
-            int contributionCount,
-            PromptContext context
-    ) {
-        // Default no-op
-    }
 }
