@@ -2,7 +2,7 @@ package com.hayden.multiagentidelib.prompt;
 
 import com.hayden.multiagentidelib.agent.*;
 import com.hayden.multiagentidelib.prompt.contributor.WeAreHerePromptContributor;
-import com.hayden.utilitymodule.acp.events.ArtifactKey;
+import com.hayden.acp_cdc_ai.acp.events.ArtifactKey;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

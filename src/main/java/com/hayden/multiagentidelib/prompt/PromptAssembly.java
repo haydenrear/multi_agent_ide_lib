@@ -1,6 +1,6 @@
 package com.hayden.multiagentidelib.prompt;
 
-import com.hayden.utilitymodule.acp.events.Artifact;
+import com.hayden.acp_cdc_ai.acp.events.Artifact;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

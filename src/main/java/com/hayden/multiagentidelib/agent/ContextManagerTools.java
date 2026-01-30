@@ -5,7 +5,7 @@ import com.embabel.agent.core.AgentProcess;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.hayden.commitdiffcontext.cdc_utils.SetFromHeader;
 import com.hayden.commitdiffcontext.mcp.ToolCarrier;
-import com.hayden.utilitymodule.acp.events.Events;
+import com.hayden.acp_cdc_ai.acp.events.Events;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -15,7 +15,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.IntStream;
 
-import static com.hayden.utilitymodule.acp.AcpChatModel.MCP_SESSION_HEADER;
+import static com.hayden.acp_cdc_ai.acp.AcpChatModel.MCP_SESSION_HEADER;
 
 /**
  * Tool definitions for Context Manager agent operations over BlackboardHistory.

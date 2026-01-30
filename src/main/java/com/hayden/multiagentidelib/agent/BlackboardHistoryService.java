@@ -1,7 +1,7 @@
 package com.hayden.multiagentidelib.agent;
 
 import com.embabel.agent.api.common.OperationContext;
-import com.hayden.utilitymodule.acp.events.Artifact;
+import com.hayden.acp_cdc_ai.acp.events.Artifact;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

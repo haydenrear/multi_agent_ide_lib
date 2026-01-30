@@ -3,10 +3,9 @@ package com.hayden.multiagentidelib.agent;
 import com.embabel.agent.api.common.OperationContext;
 import com.embabel.agent.core.Blackboard;
 import com.hayden.commitdiffcontext.events.EventSubscriber;
-import com.hayden.utilitymodule.acp.events.Artifact;
-import com.hayden.utilitymodule.acp.events.EventBus;
-import com.hayden.utilitymodule.acp.events.EventListener;
-import com.hayden.utilitymodule.acp.events.Events;
+import com.hayden.acp_cdc_ai.acp.events.EventBus;
+import com.hayden.acp_cdc_ai.acp.events.EventListener;
+import com.hayden.acp_cdc_ai.acp.events.Events;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 

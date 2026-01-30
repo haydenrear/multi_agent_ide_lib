@@ -1,7 +1,7 @@
 package com.hayden.multiagentidelib.agent;
 
 import com.hayden.commitdiffcontext.mcp.ToolCarrier;
-import com.hayden.utilitymodule.permission.IPermissionGate;
+import com.hayden.acp_cdc_ai.permission.IPermissionGate;
 import lombok.RequiredArgsConstructor;
 import org.springaicommunity.agent.tools.FileSystemTools;
 import org.springaicommunity.agent.tools.ShellTools;

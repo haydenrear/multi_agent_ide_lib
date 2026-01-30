@@ -1,7 +1,7 @@
 package com.hayden.multiagentidelib.template;
 
 import com.hayden.multiagentidelib.agent.AgentModels;
-import com.hayden.utilitymodule.acp.events.ArtifactKey;
+import com.hayden.acp_cdc_ai.acp.events.ArtifactKey;
 
 import java.util.List;
 import java.util.Map;

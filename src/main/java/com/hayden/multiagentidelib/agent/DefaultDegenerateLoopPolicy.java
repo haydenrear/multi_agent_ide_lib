@@ -1,7 +1,7 @@
 package com.hayden.multiagentidelib.agent;
 
 import com.hayden.multiagentidelib.events.DegenerateLoopException;
-import com.hayden.utilitymodule.acp.events.Events;
+import com.hayden.acp_cdc_ai.acp.events.Events;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

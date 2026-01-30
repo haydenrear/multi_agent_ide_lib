@@ -1,7 +1,7 @@
 package com.hayden.multiagentidelib.artifact;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.hayden.utilitymodule.acp.events.ArtifactKey;
+import com.hayden.acp_cdc_ai.acp.events.ArtifactKey;
 import lombok.Builder;
 import lombok.With;
 

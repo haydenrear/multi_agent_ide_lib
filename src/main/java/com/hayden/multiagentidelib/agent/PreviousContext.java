@@ -1,8 +1,8 @@
 package com.hayden.multiagentidelib.agent;
 
 import com.hayden.multiagentidelib.template.DiscoveryReport;
-import com.hayden.utilitymodule.acp.events.Artifact;
-import com.hayden.utilitymodule.acp.events.ArtifactKey;
+import com.hayden.acp_cdc_ai.acp.events.Artifact;
+import com.hayden.acp_cdc_ai.acp.events.ArtifactKey;
 import lombok.Builder;
 
 import java.time.Instant;
