@@ -779,7 +779,7 @@ public class RequestEnrichment {
             
             if (lastRouting.collectorResult() != null) {
                 builder = builder.previousDiscoveryResult(lastRouting.collectorResult())
-                        .previousDiscoveryCuration(lastRouting.collectorResult().discoveryCuration());
+                        .previousDiscoveryCuration(lastRouting.collectorResult().discoveryCollectorContext());
             }
             
             return builder.build();

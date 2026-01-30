@@ -4,6 +4,8 @@ import com.hayden.multiagentidelib.template.ConsolidationTemplate;
 import com.hayden.multiagentidelib.template.PlanningTicket;
 import com.hayden.utilitymodule.acp.events.Artifact;
 import com.hayden.utilitymodule.acp.events.ArtifactKey;
+import lombok.Builder;
+import org.immutables.encode.Encoding;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -429,18 +431,17 @@ public sealed interface UpstreamContext extends AgentContext
         }
     }
 
+    @Builder
     record DiscoveryCollectorContext(
             ArtifactKey artifactKey,
-            ArtifactKey sourceResultId,
             AgentModels.DiscoveryCuration curation,
             String selectionRationale
     ) implements UpstreamContext, ConsolidationTemplate.Curation {
         @Override
         public String computeHash(Artifact.HashContext hashContext) {
-            String source = sourceResultId == null ? "" : sourceResultId.value();
             String rationale = selectionRationale == null ? "" : selectionRationale;
             String curationHash = curation == null ? "" : curation.computeHash(hashContext);
-            return hashContext.hash(source + "|" + rationale + "|" + curationHash);
+            return hashContext.hash(rationale + "|" + curationHash);
         }
 
         @Override
@@ -458,7 +459,6 @@ public sealed interface UpstreamContext extends AgentContext
                     firstChildOfType(children, AgentModels.DiscoveryCuration.class, curation);
             return (T) new DiscoveryCollectorContext(
                     artifactKey,
-                    sourceResultId,
                     updatedCuration,
                     selectionRationale
             );
@@ -484,16 +484,14 @@ public sealed interface UpstreamContext extends AgentContext
 
     record PlanningCollectorContext(
             ArtifactKey artifactKey,
-            ArtifactKey sourceResultId,
             AgentModels.PlanningCuration curation,
             String selectionRationale
     ) implements UpstreamContext, ConsolidationTemplate.Curation {
         @Override
         public String computeHash(Artifact.HashContext hashContext) {
-            String source = sourceResultId == null ? "" : sourceResultId.value();
             String rationale = selectionRationale == null ? "" : selectionRationale;
             String curationHash = curation == null ? "" : curation.computeHash(hashContext);
-            return hashContext.hash(source + "|" + rationale + "|" + curationHash);
+            return hashContext.hash(rationale + "|" + curationHash);
         }
 
         @Override
@@ -511,7 +509,6 @@ public sealed interface UpstreamContext extends AgentContext
                     firstChildOfType(children, AgentModels.PlanningCuration.class, curation);
             return (T) new PlanningCollectorContext(
                     artifactKey,
-                    sourceResultId,
                     updatedCuration,
                     selectionRationale
             );
@@ -556,16 +553,14 @@ public sealed interface UpstreamContext extends AgentContext
 
     record TicketCollectorContext(
             ArtifactKey artifactKey,
-            ArtifactKey sourceResultId,
             AgentModels.TicketCuration curation,
             String selectionRationale
     ) implements UpstreamContext, ConsolidationTemplate.Curation {
         @Override
         public String computeHash(Artifact.HashContext hashContext) {
-            String source = sourceResultId == null ? "" : sourceResultId.value();
             String rationale = selectionRationale == null ? "" : selectionRationale;
             String curationHash = curation == null ? "" : curation.computeHash(hashContext);
-            return hashContext.hash(source + "|" + rationale + "|" + curationHash);
+            return hashContext.hash(rationale + "|" + curationHash);
         }
 
         @Override
@@ -583,7 +578,6 @@ public sealed interface UpstreamContext extends AgentContext
                     firstChildOfType(children, AgentModels.TicketCuration.class, curation);
             return (T) new TicketCollectorContext(
                     artifactKey,
-                    sourceResultId,
                     updatedCuration,
                     selectionRationale
             );

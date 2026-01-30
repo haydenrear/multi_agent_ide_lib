@@ -1056,13 +1056,13 @@ public interface AgentModels {
             @JsonPropertyDescription("Query-specific findings keyed by query name.")
             Map<String, QueryFindings> querySpecificFindings,
             @JsonPropertyDescription("Curated discovery context for downstream agents.")
-            UpstreamContext.DiscoveryCollectorContext discoveryCuration
+            UpstreamContext.DiscoveryCollectorContext discoveryCollectorContext
     ) implements ConsolidationTemplate, AgentResult {
         @Override
         public List<Artifact.AgentModel> children() {
             List<Artifact.AgentModel> children = new ArrayList<>();
-            if (discoveryCuration != null) {
-                children.add(discoveryCuration);
+            if (discoveryCollectorContext != null) {
+                children.add(discoveryCollectorContext);
             }
             return List.copyOf(children);
         }
@@ -1070,9 +1070,9 @@ public interface AgentModels {
         @Override
         public <T extends Artifact.AgentModel> T withChildren(List<Artifact.AgentModel> children) {
             UpstreamContext.DiscoveryCollectorContext updatedCuration =
-                    firstChildOfType(children, UpstreamContext.DiscoveryCollectorContext.class, discoveryCuration);
+                    firstChildOfType(children, UpstreamContext.DiscoveryCollectorContext.class, discoveryCollectorContext);
             return (T) this.toBuilder()
-                    .discoveryCuration(updatedCuration)
+                    .discoveryCollectorContext(updatedCuration)
                     .build();
         }
 
@@ -1082,7 +1082,7 @@ public interface AgentModels {
 
         @Override
         public List<Curation> curations() {
-            return discoveryCuration == null ? List.of() : List.of(discoveryCuration);
+            return discoveryCollectorContext == null ? List.of() : List.of(discoveryCollectorContext);
         }
 
         @Override
@@ -1103,8 +1103,8 @@ public interface AgentModels {
                 }
                 builder.append("\n");
             }
-            if (discoveryCuration != null) {
-                builder.append("Curation:\n").append(discoveryCuration.prettyPrint()).append("\n");
+            if (discoveryCollectorContext != null) {
+                builder.append("Curation:\n").append(discoveryCollectorContext.prettyPrint()).append("\n");
             }
             return builder.toString().trim();
         }
