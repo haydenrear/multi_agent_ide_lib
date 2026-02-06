@@ -456,6 +456,8 @@ public class BlackboardHistory implements EventListener, EventSubscriber<Events.
                     buildTargets(event.nodeId(), permissionResolved.originNodeId());
             case Events.ArtifactEvent artifactEvent ->
                     new ArrayList<>();
+            case Events.ChatSessionCreatedEvent chatSessionCreatedEvent ->
+                    new ArrayList<>();
         };
     }
 
