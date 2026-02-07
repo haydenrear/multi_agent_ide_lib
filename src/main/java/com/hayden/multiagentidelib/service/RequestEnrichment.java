@@ -830,7 +830,7 @@ public class RequestEnrichment {
             }
             AgentModels.OrchestratorRequest lastRequest = context.last(AgentModels.OrchestratorRequest.class);
             var builder = PreviousContext.OrchestratorPreviousContext.builder()
-                    .artifactKey(resolvePreviousContextKey(lastRequest != null ? lastRequest.contextId() : null))
+                    .contextId(resolvePreviousContextKey(lastRequest != null ? lastRequest.contextId() : null))
                     .serializedOutput(lastRouting.toString())
                     .attemptNumber(countAttempts(context, AgentModels.OrchestratorRouting.class))
                     .previousAttemptAt(Instant.now());
@@ -854,7 +854,7 @@ public class RequestEnrichment {
             }
             AgentModels.OrchestratorCollectorRequest lastRequest = context.last(AgentModels.OrchestratorCollectorRequest.class);
             var builder = PreviousContext.OrchestratorCollectorPreviousContext.builder()
-                    .artifactKey(resolvePreviousContextKey(lastRequest != null ? lastRequest.contextId() : null))
+                    .contextId(resolvePreviousContextKey(lastRequest != null ? lastRequest.contextId() : null))
                     .serializedOutput(lastRouting.toString())
                     .attemptNumber(countAttempts(context, AgentModels.OrchestratorCollectorRouting.class))
                     .previousAttemptAt(Instant.now());
@@ -878,7 +878,7 @@ public class RequestEnrichment {
             }
             AgentModels.DiscoveryOrchestratorRequest lastRequest = context.last(AgentModels.DiscoveryOrchestratorRequest.class);
             var builder = PreviousContext.DiscoveryOrchestratorPreviousContext.builder()
-                    .artifactKey(resolvePreviousContextKey(lastRequest != null ? lastRequest.contextId() : null))
+                    .contextId(resolvePreviousContextKey(lastRequest != null ? lastRequest.contextId() : null))
                     .serializedOutput(lastRouting.toString())
                     .attemptNumber(countAttempts(context, AgentModels.DiscoveryOrchestratorRouting.class))
                     .previousAttemptAt(Instant.now());
@@ -899,7 +899,7 @@ public class RequestEnrichment {
             }
             AgentModels.PlanningOrchestratorRequest lastRequest = context.last(AgentModels.PlanningOrchestratorRequest.class);
             var builder = PreviousContext.PlanningOrchestratorPreviousContext.builder()
-                    .artifactKey(resolvePreviousContextKey(lastRequest != null ? lastRequest.contextId() : null))
+                    .contextId(resolvePreviousContextKey(lastRequest != null ? lastRequest.contextId() : null))
                     .serializedOutput(lastRouting.toString())
                     .attemptNumber(countAttempts(context, AgentModels.PlanningOrchestratorRouting.class))
                     .previousAttemptAt(Instant.now());
@@ -921,7 +921,7 @@ public class RequestEnrichment {
             }
             AgentModels.TicketOrchestratorRequest lastRequest = context.last(AgentModels.TicketOrchestratorRequest.class);
             var builder = PreviousContext.TicketOrchestratorPreviousContext.builder()
-                    .artifactKey(resolvePreviousContextKey(lastRequest != null ? lastRequest.contextId() : null))
+                    .contextId(resolvePreviousContextKey(lastRequest != null ? lastRequest.contextId() : null))
                     .serializedOutput(lastRouting.toString())
                     .attemptNumber(countAttempts(context, AgentModels.TicketOrchestratorRouting.class))
                     .previousAttemptAt(Instant.now());
@@ -944,7 +944,7 @@ public class RequestEnrichment {
             }
             AgentModels.DiscoveryAgentResult lastResult = lastRouting.agentResult();
             var builder = PreviousContext.DiscoveryAgentPreviousContext.builder()
-                    .artifactKey(resolvePreviousContextKey(lastResult != null ? lastResult.contextId() : null))
+                    .contextId(resolvePreviousContextKey(lastResult != null ? lastResult.contextId() : null))
                     .serializedOutput(lastRouting.toString())
                     .attemptNumber(countAttempts(context, AgentModels.DiscoveryAgentRouting.class))
                     .previousAttemptAt(Instant.now());
@@ -965,7 +965,7 @@ public class RequestEnrichment {
             }
             ArtifactKey parentKey = lastRouting.agentResult() != null ? lastRouting.agentResult().contextId() : null;
             return PreviousContext.PlanningAgentPreviousContext.builder()
-                    .artifactKey(resolvePreviousContextKey(parentKey))
+                    .contextId(resolvePreviousContextKey(parentKey))
                     .serializedOutput(lastRouting.toString())
                     .attemptNumber(countAttempts(context, AgentModels.PlanningAgentRouting.class))
                     .previousAttemptAt(Instant.now())
@@ -982,7 +982,7 @@ public class RequestEnrichment {
             }
             ArtifactKey parentKey = lastRouting.agentResult() != null ? lastRouting.agentResult().contextId() : null;
             return PreviousContext.TicketAgentPreviousContext.builder()
-                    .artifactKey(resolvePreviousContextKey(parentKey))
+                    .contextId(resolvePreviousContextKey(parentKey))
                     .serializedOutput(lastRouting.toString())
                     .attemptNumber(countAttempts(context, AgentModels.TicketAgentRouting.class))
                     .previousAttemptAt(Instant.now())
@@ -998,7 +998,7 @@ public class RequestEnrichment {
                 return null;
             }
             var builder = PreviousContext.DiscoveryCollectorPreviousContext.builder()
-                    .artifactKey(resolvePreviousContextKey(lastRouting.collectorResult() != null
+                    .contextId(resolvePreviousContextKey(lastRouting.collectorResult() != null
                             ? lastRouting.collectorResult().contextId()
                             : null))
                     .serializedOutput(lastRouting.toString())
@@ -1021,7 +1021,7 @@ public class RequestEnrichment {
                 return null;
             }
             var builder = PreviousContext.PlanningCollectorPreviousContext.builder()
-                    .artifactKey(resolvePreviousContextKey(lastRouting.collectorResult() != null
+                    .contextId(resolvePreviousContextKey(lastRouting.collectorResult() != null
                             ? lastRouting.collectorResult().contextId()
                             : null))
                     .serializedOutput(lastRouting.toString())
@@ -1044,7 +1044,7 @@ public class RequestEnrichment {
                 return null;
             }
             var builder = PreviousContext.TicketCollectorPreviousContext.builder()
-                    .artifactKey(resolvePreviousContextKey(lastRouting.collectorResult() != null
+                    .contextId(resolvePreviousContextKey(lastRouting.collectorResult() != null
                             ? lastRouting.collectorResult().contextId()
                             : null))
                     .serializedOutput(lastRouting.toString())
@@ -1068,7 +1068,7 @@ public class RequestEnrichment {
             }
             ArtifactKey parentKey = lastRouting.reviewResult() != null ? lastRouting.reviewResult().contextId() : null;
             return PreviousContext.ReviewPreviousContext.builder()
-                    .artifactKey(resolvePreviousContextKey(parentKey))
+                    .contextId(resolvePreviousContextKey(parentKey))
                     .serializedOutput(lastRouting.toString())
                     .attemptNumber(countAttempts(context, AgentModels.ReviewRouting.class))
                     .previousAttemptAt(Instant.now())
@@ -1085,7 +1085,7 @@ public class RequestEnrichment {
             }
             ArtifactKey parentKey = lastRouting.mergerResult() != null ? lastRouting.mergerResult().contextId() : null;
             return PreviousContext.MergerPreviousContext.builder()
-                    .artifactKey(resolvePreviousContextKey(parentKey))
+                    .contextId(resolvePreviousContextKey(parentKey))
                     .serializedOutput(lastRouting.toString())
                     .attemptNumber(countAttempts(context, AgentModels.MergerRouting.class))
                     .previousAttemptAt(Instant.now())
