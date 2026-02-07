@@ -33,11 +33,11 @@ public class BlackboardHistoryService {
 
         history.addEntry(actionName, input);
 
-        if (input != null) {
-            context.getAgentProcess().clear();
-        }
+//        if (input != null) {
+//            context.getAgentProcess().clear();
+//        }
 
-        context.getAgentProcess().addObject(history);
+//        context.getAgentProcess().addObject(history);
 
         if (degenerateLoopPolicies != null && !degenerateLoopPolicies.isEmpty()) {
             for (DegenerateLoopPolicy policy : degenerateLoopPolicies) {
@@ -50,6 +50,18 @@ public class BlackboardHistoryService {
                         });
             }
         }
+
+        return history;
+    }
+
+    public BlackboardHistory hideInput(
+            OperationContext context
+    ) {
+        BlackboardHistory history = BlackboardHistory.getEntireBlackboardHistory(context);
+
+        context.getAgentProcess().clear();
+
+        context.getAgentProcess().addObject(history);
 
         return history;
     }
