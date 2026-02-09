@@ -1,12 +1,15 @@
 package com.hayden.multiagentidelib.prompt.contributor;
 
 import com.google.common.collect.Lists;
+import com.hayden.multiagentidelib.model.worktree.MainWorktreeContext;
 import com.hayden.multiagentidelib.prompt.PromptContext;
 import com.hayden.multiagentidelib.prompt.PromptContributor;
 import com.hayden.multiagentidelib.prompt.PromptContributorFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class IntellijPromptContributorFactory implements PromptContributorFactory {
@@ -17,12 +20,15 @@ public class IntellijPromptContributorFactory implements PromptContributorFactor
             return List.of();
         }
 
-        return Lists.newArrayList(GoosePromptContributor.INSTANCE);
+        return Optional.of(context.currentRequest())
+                .flatMap(ar -> Optional.ofNullable(ar.worktreeContext()))
+                .flatMap(w -> Optional.ofNullable(w.mainWorktree()))
+                .map(IntellijPromptContributor::new)
+                .map(Lists::<PromptContributor>newArrayList)
+                .orElse(new ArrayList<>());
     }
 
-    public record GoosePromptContributor() implements PromptContributor {
-
-        public static final GoosePromptContributor INSTANCE = new GoosePromptContributor();
+    public record IntellijPromptContributor(MainWorktreeContext main) implements PromptContributor {
 
         @Override
         public String name() {
@@ -36,16 +42,20 @@ public class IntellijPromptContributorFactory implements PromptContributorFactor
 
         @Override
         public String contribute(PromptContext context) {
-            return template();
+            String mainPath = main.worktreePath() != null ? main.worktreePath().toString() : "(unknown)";
+            String repoUrl = main.repositoryUrl() != null ? main.repositoryUrl() : "(unknown)";
+            return template()
+                    .replace("{{project_path}}", repoUrl)
+                    .replace("{{worktree_path}}", mainPath);
         }
 
         @Override
         public String template() {
             return """
-                    When you are using Intellij, you must reference the project from which this worktree was created.
+                    When you are using Intellij tool calls, you must reference the project from which this worktree was created.
                    
-                    Worktree: {{worktree_path}}
-                    Project: {{project_path}}
+                    Worktree Path (the path you make changes to): {{worktree_path}}
+                    Original Project Path: {{project_path}}
                     
                     This worktree was created from this project, so when you request information, you request it
                     from the associated project repository.
