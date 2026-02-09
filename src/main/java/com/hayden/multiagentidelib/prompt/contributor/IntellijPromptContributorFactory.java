@@ -54,8 +54,8 @@ public class IntellijPromptContributorFactory implements PromptContributorFactor
             return """
                     When you are using Intellij tool calls, you must reference the project from which this worktree was created.
                    
-                    Worktree Path (the path you make changes to): {{worktree_path}}
-                    Original Project Path: {{project_path}}
+                    Worktree Path (the git worktree path you make changes to): {{worktree_path}}
+                    Original Project Path (project path for Intellij worktree created from): {{project_path}}
                     
                     This worktree was created from this project, so when you request information, you request it
                     from the associated project repository.
