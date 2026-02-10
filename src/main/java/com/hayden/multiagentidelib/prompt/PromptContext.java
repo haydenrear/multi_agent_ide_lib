@@ -9,6 +9,7 @@ import com.hayden.multiagentidelib.agent.AgentModels;
 import com.hayden.acp_cdc_ai.acp.events.Artifact;
 import com.hayden.acp_cdc_ai.acp.events.ArtifactKey;
 import lombok.Builder;
+import lombok.With;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.Map;
  * upstream contexts from prior workflow phases, and optional metadata.
  */
 @Builder(toBuilder = true)
+@With
 public record PromptContext(
         AgentType agentType,
         ArtifactKey currentContextId,
