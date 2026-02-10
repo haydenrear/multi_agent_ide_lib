@@ -46,7 +46,8 @@ public class ArtifactKeyPromptContributorFactory implements PromptContributorFac
         public String template() {
             return """
                     Please do not set any of the contextId field or property contextId on any result or type in your
-                    JSON response. This is for internal purposes only.
+                    JSON response. This is for internal purposes only. Please set contextId to null. Do not set to an empty
+                    object. Please set to null.
                     """;
         }
 
