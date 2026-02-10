@@ -1,7 +1,6 @@
 package com.hayden.multiagentidelib.prompt;
 
 import com.embabel.agent.api.common.ContextualPromptElement;
-import com.embabel.common.ai.prompt.PromptElement;
 import com.hayden.multiagentidelib.agent.AgentType;
 import com.hayden.multiagentidelib.agent.PreviousContext;
 import com.hayden.multiagentidelib.agent.UpstreamContext;
@@ -31,12 +30,13 @@ public record PromptContext(
         Map<String, Object> metadata,
         List<ContextualPromptElement> promptContributors,
         String templateName,
-        Artifact.HashContext hashContext
+        Artifact.HashContext hashContext,
+        Map<String, Object> model
 ) {
 
     public PromptContext(AgentType agentType, ArtifactKey currentContextId, List<UpstreamContext> upstreamContexts, PreviousContext previousContext, BlackboardHistory blackboardHistory, AgentModels.AgentRequest previousRequest, AgentModels.AgentRequest currentRequest,
-                         Map<String, Object> metadata, String templateName) {
-        this(agentType, currentContextId, upstreamContexts, previousContext, blackboardHistory, previousRequest, currentRequest, metadata, new ArrayList<>(), templateName, Artifact.HashContext.defaultHashContext());
+                         Map<String, Object> metadata, String templateName, Map<String, Object> modelWithFeedback) {
+        this(agentType, currentContextId, upstreamContexts, previousContext, blackboardHistory, previousRequest, currentRequest, metadata, new ArrayList<>(), templateName, Artifact.HashContext.defaultHashContext(), modelWithFeedback);
     }
 
     /**
