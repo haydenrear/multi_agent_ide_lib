@@ -187,6 +187,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -218,6 +219,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -245,6 +247,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -274,6 +277,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -303,6 +307,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -332,6 +337,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -361,6 +367,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -390,6 +397,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -419,6 +427,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -448,6 +457,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -477,6 +487,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -504,6 +515,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -533,6 +545,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -560,6 +573,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -589,6 +603,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -616,6 +631,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -646,6 +662,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -673,6 +690,7 @@ public interface AgentModels {
                 @JsonInclude(JsonInclude.Include.NON_NULL)
                 ArtifactKey contextId,
                 @JsonPropertyDescription("Worktree sandbox context for this request.")
+                @SkipPropertyFilter
                 WorktreeSandboxContext worktreeContext,
                 @JsonPropertyDescription("Interrupt type (HUMAN_REVIEW, AGENT_REVIEW, PAUSE, STOP).")
                 Events.InterruptType type,
@@ -2131,6 +2149,7 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
@@ -2139,12 +2158,16 @@ public interface AgentModels {
             @JsonPropertyDescription("Provide any feedback from interrupt requests.")
             String feedback,
             @JsonPropertyDescription("Curated discovery context from discovery collector.")
+            @SkipPropertyFilter
             UpstreamContext.DiscoveryCollectorContext discoveryCuration,
             @JsonPropertyDescription("Curated planning context from planning collector.")
+            @SkipPropertyFilter
             UpstreamContext.PlanningCollectorContext planningCuration,
             @JsonPropertyDescription("Curated ticket context from ticket collector.")
+            @SkipPropertyFilter
             UpstreamContext.TicketCollectorContext ticketCuration,
             @JsonPropertyDescription("Previous orchestrator context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.OrchestratorPreviousContext previousContext
     ) implements AgentRequest {
         @Override
@@ -2233,18 +2256,23 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
             @JsonPropertyDescription("Current workflow phase.")
             String phase,
             @JsonPropertyDescription("Curated discovery context from discovery collector.")
+            @SkipPropertyFilter
             UpstreamContext.DiscoveryCollectorContext discoveryCuration,
             @JsonPropertyDescription("Curated planning context from planning collector.")
+            @SkipPropertyFilter
             UpstreamContext.PlanningCollectorContext planningCuration,
             @JsonPropertyDescription("Curated ticket context from ticket collector.")
+            @SkipPropertyFilter
             UpstreamContext.TicketCollectorContext ticketCuration,
             @JsonPropertyDescription("Previous orchestrator collector context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.OrchestratorCollectorPreviousContext previousContext,
             @JsonPropertyDescription("Merge descriptor from final merge to source repository.")
             MergeDescriptor mergeDescriptor
@@ -2409,12 +2437,14 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
             @JsonPropertyDescription("Provide any feedback from interrupt requests.")
             String feedback,
             @JsonPropertyDescription("Previous discovery orchestrator context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.DiscoveryOrchestratorPreviousContext previousContext
     ) implements AgentRequest {
         @Override
@@ -2474,15 +2504,18 @@ public interface AgentModels {
     @With
     record DiscoveryAgentRequest(
             @JsonInclude(JsonInclude.Include.NON_NULL)
+            @SkipPropertyFilter
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
             @JsonPropertyDescription("Subdomain focus for this discovery task.")
             String subdomainFocus,
             @JsonPropertyDescription("Previous discovery agent context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.DiscoveryAgentPreviousContext previousContext
     ) implements AgentRequest {
         @Override
@@ -2546,8 +2579,10 @@ public interface AgentModels {
             List<DiscoveryAgentRequest> requests,
             @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this delegation result.")
+            @SkipPropertyFilter
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
@@ -2671,14 +2706,17 @@ public interface AgentModels {
     record DiscoveryCollectorRequest(
             @JsonInclude(JsonInclude.Include.NON_NULL)
             @JsonPropertyDescription("Unique context id for this request.")
+            @SkipPropertyFilter
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
             @JsonPropertyDescription("Serialized discovery results to consolidate.")
             String discoveryResults,
             @JsonPropertyDescription("Previous discovery collector context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.DiscoveryCollectorPreviousContext previousContext
     ) implements AgentRequest {
         @Override
@@ -2813,14 +2851,17 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
             @JsonPropertyDescription("Provide any feedback from interrupt requests.")
             String feedback,
             @JsonPropertyDescription("Curated discovery context from discovery collector.")
+            @SkipPropertyFilter
             UpstreamContext.DiscoveryCollectorContext discoveryCuration,
             @JsonPropertyDescription("Previous planning orchestrator context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.PlanningOrchestratorPreviousContext previousContext
     ) implements AgentRequest {
         @Override
@@ -2885,12 +2926,15 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
             @JsonPropertyDescription("Curated discovery context from discovery collector.")
+            @SkipPropertyFilter
             UpstreamContext.DiscoveryCollectorContext discoveryCuration,
             @JsonPropertyDescription("Previous planning agent context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.PlanningAgentPreviousContext previousContext
     ) implements AgentRequest {
         @Override
@@ -2954,6 +2998,7 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this delegation result.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
@@ -3073,14 +3118,17 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
             @JsonPropertyDescription("Serialized planning results to consolidate.")
             String planningResults,
             @JsonPropertyDescription("Curated discovery context from discovery collector.")
+            @SkipPropertyFilter
             UpstreamContext.DiscoveryCollectorContext discoveryCuration,
             @JsonPropertyDescription("Previous planning collector context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.PlanningCollectorPreviousContext previousContext
     ) implements AgentRequest {
         @Override
@@ -3219,16 +3267,20 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
             @JsonPropertyDescription("Provide any feedback from interrupt requests.")
             String feedback,
             @JsonPropertyDescription("Curated discovery context from discovery collector.")
+            @SkipPropertyFilter
             UpstreamContext.DiscoveryCollectorContext discoveryCuration,
             @JsonPropertyDescription("Curated planning context from planning collector.")
+            @SkipPropertyFilter
             UpstreamContext.PlanningCollectorContext planningCuration,
             @JsonPropertyDescription("Previous ticket orchestrator context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.TicketOrchestratorPreviousContext previousContext
     ) implements AgentRequest {
         @Override
@@ -3296,16 +3348,20 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Ticket details or instructions.")
             String ticketDetails,
             @JsonPropertyDescription("File path containing ticket details.")
             String ticketDetailsFilePath,
             @JsonPropertyDescription("Curated discovery context from discovery collector.")
+            @SkipPropertyFilter
             UpstreamContext.DiscoveryCollectorContext discoveryCuration,
             @JsonPropertyDescription("Curated planning context from planning collector.")
+            @SkipPropertyFilter
             UpstreamContext.PlanningCollectorContext planningCuration,
             @JsonPropertyDescription("Previous ticket agent context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.TicketAgentPreviousContext previousContext
     ) implements AgentRequest {
         @Override
@@ -3390,6 +3446,7 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this delegation result.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
@@ -3505,16 +3562,20 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Workflow goal statement.")
             String goal,
             @JsonPropertyDescription("Serialized ticket results to consolidate.")
             String ticketResults,
             @JsonPropertyDescription("Curated discovery context from discovery collector.")
+            @SkipPropertyFilter
             UpstreamContext.DiscoveryCollectorContext discoveryCuration,
             @JsonPropertyDescription("Curated planning context from planning collector.")
+            @SkipPropertyFilter
             UpstreamContext.PlanningCollectorContext planningCuration,
             @JsonPropertyDescription("Previous ticket collector context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.TicketCollectorPreviousContext previousContext
     ) implements AgentRequest {
         @Override
@@ -3653,12 +3714,14 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Content to review.")
             String content,
             @JsonPropertyDescription("Review criteria or rubric.")
             String criteria,
             @JsonPropertyDescription("Previous review context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.ReviewPreviousContext previousContext,
             @JsonPropertyDescription("Return route to orchestrator collector.")
             OrchestratorCollectorRequest returnToOrchestratorCollector,
@@ -3783,6 +3846,7 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Merge context or details.")
             String mergeContext,
@@ -3791,6 +3855,7 @@ public interface AgentModels {
             @JsonPropertyDescription("Conflicting files or paths.")
             String conflictFiles,
             @JsonPropertyDescription("Previous merger context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.MergerPreviousContext previousContext,
             @JsonPropertyDescription("Return route to orchestrator collector.")
             OrchestratorCollectorRequest returnToOrchestratorCollector,
@@ -3930,6 +3995,7 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Clear explanation of what context you need blackboard intra-agent context.")
             String reason,
@@ -3979,6 +4045,7 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Type of context reconstruction.")
             ContextManagerRequestType type,
@@ -4029,6 +4096,7 @@ public interface AgentModels {
             @JsonPropertyDescription("Route back to context orchestrator.")
             ContextManagerRequest returnToContextOrchestrator,
             @JsonPropertyDescription("Previous context for reruns.")
+            @SkipPropertyFilter
             PreviousContext previousContext
     ) implements AgentRequest {
         @Override
@@ -4338,10 +4406,12 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Planning agent results to consolidate.")
             List<PlanningAgentResult> planningAgentResults,
             @JsonPropertyDescription("Previous planning collector context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.PlanningCollectorPreviousContext previousContext,
             @JsonPropertyDescription("Merge aggregation from child→trunk merges.")
             MergeAggregation mergeAggregation
@@ -4423,10 +4493,12 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Ticket agent results to consolidate.")
             List<TicketAgentResult> ticketAgentResults,
             @JsonPropertyDescription("Previous ticket collector context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.TicketCollectorPreviousContext previousContext,
             @JsonPropertyDescription("Merge aggregation from child→trunk merges.")
             MergeAggregation mergeAggregation
@@ -4508,10 +4580,12 @@ public interface AgentModels {
             @JsonPropertyDescription("Unique context id for this request.")
             ArtifactKey contextId,
             @JsonPropertyDescription("Worktree sandbox context for this request.")
+            @SkipPropertyFilter
             WorktreeSandboxContext worktreeContext,
             @JsonPropertyDescription("Discovery agent results to consolidate.")
             List<DiscoveryAgentResult> result,
             @JsonPropertyDescription("Previous discovery collector context for reruns.")
+            @SkipPropertyFilter
             PreviousContext.DiscoveryCollectorPreviousContext previousContext,
             @JsonPropertyDescription("Merge aggregation from child→trunk merges.")
             MergeAggregation mergeAggregation
