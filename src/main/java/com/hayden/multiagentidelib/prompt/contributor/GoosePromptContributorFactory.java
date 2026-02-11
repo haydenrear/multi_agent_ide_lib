@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
+@Profile("goose")
 public class GoosePromptContributorFactory implements PromptContributorFactory {
 
     @Override
@@ -43,7 +44,12 @@ public class GoosePromptContributorFactory implements PromptContributorFactory {
         @Override
         public String template() {
             return """
-                    Please do not use the Subagent tool call.
+                    Under no circumstances should you use the Subagent tool call.
+                    This subagent tool call will not have any of the required permissions.
+                    It will fail in every respect. Instead, use the routing of the agents
+                    provided to perform the work.
+                    
+                    **Please do not use the Subagent tool call under any circumstances.**
                     """;
         }
 

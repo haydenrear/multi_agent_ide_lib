@@ -15,7 +15,7 @@ import java.util.Optional;
 @Component
 public class DefaultDegenerateLoopPolicy implements DegenerateLoopPolicy {
 
-    private static final int REPETITION_THRESHOLD = 3;
+    private static final int REPETITION_THRESHOLD = 6;
 
     private EventBus eventBus;
 
