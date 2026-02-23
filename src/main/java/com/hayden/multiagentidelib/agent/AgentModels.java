@@ -921,7 +921,14 @@ public interface AgentModels {
                 Map<String, String> options,
                 @JsonPropertyDescription("Recommended option key if applicable.")
                 String recommended
-        ) {
+        ) implements AgentPretty{
+
+
+            @Override
+            public String prettyPrint() {
+                StringBuilder sb = new StringBuilder();
+                return "";
+            }
         }
 
         @Builder(toBuilder=true)
@@ -1833,7 +1840,7 @@ public interface AgentModels {
         builder.append("\t").append(normalized).append("\n");
     }
 
-    private static void appendPrettyContext(StringBuilder builder, String label, AgentContext context) {
+    private static void appendPrettyContext(StringBuilder builder, String label, AgentPretty context) {
         builder.append(label).append(":\n");
         if (context == null) {
             builder.append("\t(none)\n");
@@ -2074,7 +2081,7 @@ public interface AgentModels {
             if (result == null) {
                 continue;
             }
-            String summary = result.prettyPrint(new AgentContext.AgentSerializationCtx.ResultsSerialization());
+            String summary = result.prettyPrint(new AgentPretty.AgentSerializationCtx.ResultsSerialization());
             if (summary == null || summary.isBlank()) {
                 continue;
             }
