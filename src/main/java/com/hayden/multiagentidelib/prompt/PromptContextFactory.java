@@ -143,6 +143,10 @@ public class PromptContextFactory {
                 collectNonNull(upstreamContexts, req.planningCuration());
                 previousContext = req.previousContext();
             }
+            case AgentModels.CommitAgentRequest req -> {
+            }
+            case AgentModels.MergeConflictRequest req -> {
+            }
             case AgentModels.TicketCollectorRequest req -> {
                 collectNonNull(upstreamContexts, req.discoveryCuration());
                 collectNonNull(upstreamContexts, req.planningCuration());
@@ -225,7 +229,7 @@ public class PromptContextFactory {
                 templateName,
                 model,
                 modelName,
-               operationContext
+                operationContext
         );
 
         return pc.toBuilder().promptContributors(this.promptContributor.getContributors(pc)).build();
